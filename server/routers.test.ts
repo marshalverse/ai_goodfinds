@@ -186,3 +186,105 @@ describe("profile.update", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("posts.update", () => {
+  it("requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.posts.update({ id: 1, title: "Updated Title" })
+    ).rejects.toThrow();
+  });
+
+  it("validates input schema", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    // Should not throw with valid input
+    await expect(
+      caller.posts.update({ id: 999999, title: "Updated" })
+    ).rejects.toThrow(); // Will throw because post doesn't exist for this user
+  });
+});
+
+describe("notifications", () => {
+  it("list requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.notifications.list({ limit: 10 })
+    ).rejects.toThrow();
+  });
+
+  it("unreadCount requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.notifications.unreadCount()
+    ).rejects.toThrow();
+  });
+
+  it("markAsRead requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.notifications.markAsRead({ id: 1 })
+    ).rejects.toThrow();
+  });
+
+  it("markAllAsRead requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.notifications.markAllAsRead()
+    ).rejects.toThrow();
+  });
+
+  it("returns notifications for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.notifications.list({ limit: 10 });
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("returns unread count for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.notifications.unreadCount();
+    expect(typeof result).toBe("number");
+    expect(result).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("ai.generateSummary", () => {
+  it("requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.ai.generateSummary({ content: "Test content" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("ai.optimizePrompt", () => {
+  it("requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.ai.optimizePrompt({ prompt: "Test prompt" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("upload.image", () => {
+  it("requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.upload.image({
+        base64: "dGVzdA==",
+        mimeType: "image/png",
+        fileName: "test.png",
+      })
+    ).rejects.toThrow();
+  });
+});

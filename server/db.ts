@@ -1,8 +1,8 @@
 import { eq, and, desc, asc, sql, like, or, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
-  InsertUser, users, aiTools, posts, comments, likes, bookmarks, tags, postTags, postTools, userToolPreferences,
-  type AiTool, type Post, type Comment, type Tag
+  InsertUser, users, aiTools, posts, comments, likes, bookmarks, tags, postTags, postTools, userToolPreferences, notifications,
+  type AiTool, type Post, type Comment, type Tag, type InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -388,4 +388,94 @@ export async function getPostsByAuthor(authorId: number, page = 1, limit = 20) {
     return { ...post, tool: tool[0] };
   }));
   return { posts: enriched, total: countResult?.count || 0 };
+}
+
+// ===== Update Post =====
+export async function updatePost(postId: number, authorId: number, data: {
+  title?: string; content?: string; summary?: string;
+  toolId?: number; toolIds?: number[]; postType?: string; tagIds?: number[];
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const post = await db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.authorId, authorId))).limit(1);
+  if (!post[0]) throw new Error("Post not found or unauthorized");
+
+  const updateData: Record<string, any> = {};
+  if (data.title !== undefined) updateData.title = data.title;
+  if (data.content !== undefined) updateData.content = data.content;
+  if (data.summary !== undefined) updateData.summary = data.summary;
+  if (data.toolId !== undefined) updateData.toolId = data.toolId;
+  if (data.postType !== undefined) updateData.postType = data.postType;
+
+  if (Object.keys(updateData).length > 0) {
+    await db.update(posts).set(updateData).where(eq(posts.id, postId));
+  }
+
+  // Update tool associations
+  if (data.toolIds && data.toolIds.length > 0) {
+    await db.delete(postTools).where(eq(postTools.postId, postId));
+    await db.insert(postTools).values(data.toolIds.map(toolId => ({ postId, toolId })));
+  }
+
+  // Update tag associations
+  if (data.tagIds !== undefined) {
+    await db.delete(postTags).where(eq(postTags.postId, postId));
+    if (data.tagIds.length > 0) {
+      await db.insert(postTags).values(data.tagIds.map(tagId => ({ postId, tagId })));
+    }
+  }
+}
+
+// ===== Notifications =====
+export async function createNotification(data: {
+  userId: number; type: "like" | "comment" | "system";
+  message: string; relatedPostId?: number; relatedUserId?: number;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(notifications).values({
+      userId: data.userId,
+      type: data.type,
+      message: data.message,
+      relatedPostId: data.relatedPostId || null,
+      relatedUserId: data.relatedUserId || null,
+    });
+  } catch (error) {
+    console.error("[Notification] Failed to create:", error);
+  }
+}
+
+export async function getNotifications(userId: number, limit = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function getUnreadNotificationCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const [result] = await db.select({ count: sql<number>`count(*)` })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  return result?.count || 0;
+}
+
+export async function markNotificationAsRead(notificationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)));
+}
+
+export async function markAllNotificationsAsRead(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(eq(notifications.userId, userId));
 }

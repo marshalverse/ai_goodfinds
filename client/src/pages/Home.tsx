@@ -53,9 +53,9 @@ export default function Home() {
               探索 AI 的無限可能
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              <span className="gradient-text">AI 工具</span>
+              <span className="gradient-text">AI好物誌</span>
               <br />
-              <span className="text-foreground">社群討論平台</span>
+              <span className="text-foreground">AI GoodFinds</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
               在這裡，您可以與全球 AI 愛好者交流使用經驗、分享提示詞技巧、

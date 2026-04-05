@@ -4,6 +4,9 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { storagePut } from "./storage";
+import { invokeLLM } from "./_core/llm";
+import { nanoid } from "nanoid";
 
 export const appRouter = router({
   system: systemRouter,
@@ -34,6 +37,22 @@ export const appRouter = router({
     }),
   }),
 
+  // ===== Image Upload =====
+  upload: router({
+    image: protectedProcedure.input(z.object({
+      base64: z.string(),
+      mimeType: z.string(),
+      fileName: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const buffer = Buffer.from(input.base64, "base64");
+      const ext = input.mimeType.split("/")[1] || "png";
+      const fileName = input.fileName || `image-${nanoid(8)}.${ext}`;
+      const fileKey = `uploads/${ctx.user.id}/${nanoid(12)}-${fileName}`;
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+      return { url };
+    }),
+  }),
+
   // ===== Posts =====
   posts: router({
     create: protectedProcedure.input(z.object({
@@ -56,6 +75,28 @@ export const appRouter = router({
         tagIds: input.tagIds,
       });
       return { id: postId };
+    }),
+
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      title: z.string().min(1).max(300).optional(),
+      content: z.string().min(1).optional(),
+      summary: z.string().optional(),
+      toolId: z.number().optional(),
+      toolIds: z.array(z.number()).optional(),
+      postType: z.enum(["article", "prompt", "tutorial", "question", "comparison"]).optional(),
+      tagIds: z.array(z.number()).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      await db.updatePost(input.id, ctx.user.id, {
+        title: input.title,
+        content: input.content,
+        summary: input.summary,
+        toolId: input.toolId,
+        toolIds: input.toolIds,
+        postType: input.postType,
+        tagIds: input.tagIds,
+      });
+      return { success: true };
     }),
 
     getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
@@ -97,6 +138,17 @@ export const appRouter = router({
         content: input.content,
         parentId: input.parentId,
       });
+      // Create notification for post author
+      const post = await db.getPostById(input.postId);
+      if (post && post.authorId !== ctx.user.id) {
+        await db.createNotification({
+          userId: post.authorId,
+          type: "comment",
+          message: `${ctx.user.name || "有人"} 評論了您的文章「${post.title}」`,
+          relatedPostId: input.postId,
+          relatedUserId: ctx.user.id,
+        });
+      }
       return { id: commentId };
     }),
 
@@ -114,6 +166,19 @@ export const appRouter = router({
   likes: router({
     toggle: protectedProcedure.input(z.object({ postId: z.number() })).mutation(async ({ ctx, input }) => {
       const liked = await db.toggleLike(ctx.user.id, input.postId);
+      // Create notification for post author when liked
+      if (liked) {
+        const post = await db.getPostById(input.postId);
+        if (post && post.authorId !== ctx.user.id) {
+          await db.createNotification({
+            userId: post.authorId,
+            type: "like",
+            message: `${ctx.user.name || "有人"} 按讚了您的文章「${post.title}」`,
+            relatedPostId: input.postId,
+            relatedUserId: ctx.user.id,
+          });
+        }
+      }
       return { liked };
     }),
     userLikedPosts: protectedProcedure.query(async ({ ctx }) => {
@@ -132,6 +197,72 @@ export const appRouter = router({
     }),
     list: protectedProcedure.query(async ({ ctx }) => {
       return db.getUserBookmarkedPosts(ctx.user.id);
+    }),
+  }),
+
+  // ===== Notifications =====
+  notifications: router({
+    list: protectedProcedure.input(z.object({
+      limit: z.number().optional(),
+    })).query(async ({ ctx, input }) => {
+      return db.getNotifications(ctx.user.id, input.limit);
+    }),
+    unreadCount: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUnreadNotificationCount(ctx.user.id);
+    }),
+    markAsRead: protectedProcedure.input(z.object({
+      id: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      await db.markNotificationAsRead(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.markAllNotificationsAsRead(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ===== AI Assistant =====
+  ai: router({
+    optimizePrompt: protectedProcedure.input(z.object({
+      prompt: z.string().min(1),
+      toolName: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `你是一位專業的 AI 提示詞優化專家。請幫助使用者優化他們的提示詞，使其更加清晰、具體、有效。${input.toolName ? `目標 AI 工具是 ${input.toolName}。` : ""}
+回覆格式：
+1. 先簡短說明優化了哪些方面
+2. 然後給出優化後的完整提示詞（用 --- 分隔）`,
+          },
+          {
+            role: "user",
+            content: `請優化以下提示詞：\n\n${input.prompt}`,
+          },
+        ],
+      });
+      return { result: response.choices[0]?.message?.content || "" };
+    }),
+
+    generateSummary: protectedProcedure.input(z.object({
+      content: z.string().min(1),
+      title: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: "你是一位專業的文章摘要生成專家。請根據文章內容生成一段簡潔、精確的摘要，長度在 50-150 字之間。只需要回覆摘要內容，不需要其他說明。",
+          },
+          {
+            role: "user",
+            content: `${input.title ? `文章標題：${input.title}\n\n` : ""}文章內容：\n\n${input.content}`,
+          },
+        ],
+      });
+      return { summary: response.choices[0]?.message?.content || "" };
     }),
   }),
 

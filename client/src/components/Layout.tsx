@@ -7,6 +7,7 @@ import {
   BookOpen, LogOut, User, Menu, X, Sparkles
 } from "lucide-react";
 import { useState } from "react";
+import NotificationCenter from "@/components/NotificationCenter";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -35,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">
               <Compass className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold gradient-text hidden sm:block">AI Community Hub</span>
+            <span className="text-lg font-bold gradient-text hidden sm:block">AI好物誌</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -67,6 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <span className="hidden sm:inline">發表文章</span>
                   </Button>
                 </Link>
+                <NotificationCenter />
                 <Link href="/bookmarks">
                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                     <Bookmark className="w-4 h-4" />
@@ -152,7 +154,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Footer */}
       <footer className="border-t border-border/50 py-8 mt-16">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} AI Community Hub. 探索、分享、交流 AI 的無限可能。</p>
+          <p>&copy; {new Date().getFullYear()} AI GoodFinds. 探索、分享、交流 AI 的無限可能。</p>
         </div>
       </footer>
     </div>

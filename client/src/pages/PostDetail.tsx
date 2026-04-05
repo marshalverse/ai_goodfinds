@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, MessageCircle, Bookmark, Eye, ArrowLeft, Share2, Send } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Eye, ArrowLeft, Share2, Send, Pencil } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useState, useMemo } from "react";
@@ -89,7 +89,16 @@ export default function PostDetail() {
           <Badge variant="outline">{postTypeLabels[post.postType] || post.postType}</Badge>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">{post.title}</h1>
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{post.title}</h1>
+          {isAuthenticated && user?.id === post.authorId && (
+            <Link href={`/create?edit=${post.id}`}>
+              <Button variant="outline" size="sm" className="gap-1.5 shrink-0 text-muted-foreground hover:text-foreground">
+                <Pencil className="w-3.5 h-3.5" /> 編輯
+              </Button>
+            </Link>
+          )}
+        </div>
 
         <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
           <Link href={`/profile/${post.author?.id}`} className="flex items-center gap-2 hover:text-foreground transition-colors">
@@ -115,9 +124,7 @@ export default function PostDetail() {
         )}
 
         {/* Content */}
-        <div className="prose-custom mb-8">
-          <Streamdown>{post.content}</Streamdown>
-        </div>
+        <div className="prose-custom mb-8" dangerouslySetInnerHTML={{ __html: post.content }} />
 
         {/* Actions Bar */}
         <div className="flex items-center gap-3 py-4 border-t border-b border-border/50 mb-8">

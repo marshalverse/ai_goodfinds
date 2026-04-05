@@ -170,3 +170,23 @@ export const userToolPreferences = mysqlTable("user_tool_preferences", {
 ]);
 
 export type UserToolPreference = typeof userToolPreferences.$inferSelect;
+
+/**
+ * Notifications for users
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["like", "comment", "system"]).default("system").notNull(),
+  message: text("message").notNull(),
+  relatedPostId: int("relatedPostId"),
+  relatedUserId: int("relatedUserId"),
+  isRead: boolean("isRead").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("notifications_userId_idx").on(table.userId),
+  index("notifications_isRead_idx").on(table.isRead),
+]);
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
