@@ -5,19 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { PenSquare, Search, Wand2, Copy, Heart, Eye, MessageCircle } from "lucide-react";
+import { PenSquare, Search, Wand2, Copy, Heart, MessageCircle } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PromptsPage() {
   const { isAuthenticated } = useAuth();
   const [toolFilter, setToolFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("latest");
   const [searchQuery, setSearchQuery] = useState("");
+  const { t, language } = useLanguage();
 
   const { data: tools } = trpc.tools.list.useQuery();
   const { data: postsData, isLoading } = trpc.posts.list.useQuery({
@@ -30,23 +32,21 @@ export default function PromptsPage() {
 
   return (
     <div className="container py-8">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
             <Wand2 className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">提示詞庫</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("prompts.title")}</h1>
         </div>
-        <p className="text-muted-foreground">探索和分享各種 AI 工具的精選提示詞，提升您的 AI 使用效率</p>
+        <p className="text-muted-foreground">{t("prompts.subtitle")}</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-8">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="搜尋提示詞..."
+            placeholder={t("search.placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-secondary border-border/50"
@@ -54,10 +54,10 @@ export default function PromptsPage() {
         </div>
         <Select value={toolFilter} onValueChange={setToolFilter}>
           <SelectTrigger className="w-40 bg-secondary border-border/50">
-            <SelectValue placeholder="所有工具" />
+            <SelectValue placeholder={t("search.filter.all")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">所有工具</SelectItem>
+            <SelectItem value="all">{t("search.filter.all")}</SelectItem>
             {(tools || []).map((tool) => (
               <SelectItem key={tool.id} value={String(tool.id)}>{tool.name}</SelectItem>
             ))}
@@ -68,27 +68,26 @@ export default function PromptsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="latest">最新</SelectItem>
-            <SelectItem value="popular">最熱門</SelectItem>
-            <SelectItem value="views">最多瀏覽</SelectItem>
+            <SelectItem value="latest">{t("search.sort.latest")}</SelectItem>
+            <SelectItem value="popular">{t("search.sort.popular")}</SelectItem>
+            <SelectItem value="views">{t("search.sort.mostLiked")}</SelectItem>
           </SelectContent>
         </Select>
         {isAuthenticated ? (
           <Link href="/create?postType=prompt">
             <Button className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 text-white border-0">
-              <PenSquare className="w-4 h-4" /> 分享提示詞
+              <PenSquare className="w-4 h-4" /> {t("prompts.share")}
             </Button>
           </Link>
         ) : (
           <a href={getLoginUrl()}>
             <Button className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 text-white border-0">
-              登入後分享
+              {t("nav.login")}
             </Button>
           </a>
         )}
       </div>
 
-      {/* Prompts Grid */}
       {isLoading ? (
         <div className="grid md:grid-cols-2 gap-4">
           {[1,2,3,4,5,6].map(i => <div key={i} className="h-56 bg-muted rounded-xl animate-pulse" />)}
@@ -96,7 +95,7 @@ export default function PromptsPage() {
       ) : postsData?.posts && postsData.posts.length > 0 ? (
         <div className="grid md:grid-cols-2 gap-4">
           {postsData.posts.map((post) => (
-            <PromptCard key={post.id} post={post} />
+            <PromptCard key={post.id} post={post} language={language} />
           ))}
         </div>
       ) : (
@@ -104,29 +103,27 @@ export default function PromptsPage() {
           <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
             <Wand2 className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">尚無提示詞</h3>
-          <p className="text-muted-foreground mb-4">成為第一個分享提示詞的人！</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t("search.noResults")}</h3>
         </div>
       )}
     </div>
   );
 }
 
-function PromptCard({ post }: { post: any }) {
+function PromptCard({ post, language }: { post: any; language: string }) {
   const contentPreview = post.content.slice(0, 200).replace(/[#*`]/g, "");
 
   const handleCopy = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     navigator.clipboard.writeText(post.content);
-    toast.success("提示詞已複製到剪貼簿");
+    toast.success(language === "zh" ? "提示詞已複製到剪貼簿" : "Prompt copied to clipboard");
   };
 
   return (
     <Link href={`/posts/${post.id}`}>
       <Card className="group h-full hover:border-amber-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/5 bg-card border-border/50">
         <CardContent className="p-5">
-          {/* Top: Tool badge */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               {post.tool && (
@@ -145,28 +142,25 @@ function PromptCard({ post }: { post: any }) {
             </Button>
           </div>
 
-          {/* Title */}
           <h3 className="font-semibold text-card-foreground group-hover:text-amber-400 transition-colors line-clamp-1 mb-3">
             {post.title}
           </h3>
 
-          {/* Prompt Preview */}
           <div className="bg-secondary/80 rounded-lg p-3 mb-4 border border-border/30">
             <p className="text-sm text-muted-foreground font-mono line-clamp-4 leading-relaxed">
               {contentPreview}
             </p>
           </div>
 
-          {/* Bottom: Author + Stats */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-500/60 to-orange-500/30 flex items-center justify-center text-[10px] text-white font-medium">
                 {post.author?.name?.[0]?.toUpperCase() || "U"}
               </div>
-              <span className="text-xs text-muted-foreground">{post.author?.name || "匿名用戶"}</span>
+              <span className="text-xs text-muted-foreground">{post.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
               <span className="text-xs text-muted-foreground/50">·</span>
               <span className="text-xs text-muted-foreground/70">
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: zhTW })}
+                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: language === "zh" ? zhTW : undefined })}
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">

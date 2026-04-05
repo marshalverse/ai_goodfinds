@@ -1,8 +1,11 @@
 import { Mail, Globe } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663513894733/EMmCrr8wS6ruYCgz6zaGkz/logo_8b48a01d.png";
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="border-t border-border/50 bg-card/30">
       <div className="container py-8">
@@ -19,10 +22,10 @@ export default function Footer() {
           {/* Center: Copyright */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} <span className="font-medium text-foreground/80">marshalvision.co</span>
+              &copy; {new Date().getFullYear()} <span className="font-medium text-foreground/80">{t("footer.company")}</span>
             </p>
             <p className="text-xs text-muted-foreground/70 mt-0.5">
-              探索、分享、交流 AI 的無限可能
+              {t("footer.description")}
             </p>
           </div>
 

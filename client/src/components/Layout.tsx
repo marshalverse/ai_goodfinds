@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
   Search, PenSquare, Bookmark, TrendingUp, Compass, GitCompare,
-  BookOpen, LogOut, User, Menu, X, Sparkles, Star
+  BookOpen, LogOut, User, Menu, X, Sparkles, Star, Globe
 } from "lucide-react";
 import { useState } from "react";
 import NotificationCenter from "@/components/NotificationCenter";
 import Footer from "@/components/Footer";
 import ToolSidebar from "@/components/ToolSidebar";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -20,15 +21,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   const navItems = [
-    { href: "/", label: "首頁", icon: Sparkles },
-    { href: "/prompts", label: "提示詞庫", icon: Compass },
-    { href: "/trending", label: "熱門", icon: TrendingUp },
-    { href: "/compare", label: "工具比較", icon: GitCompare },
-    { href: "/guide", label: "新手指南", icon: BookOpen },
-    { href: "/wishlist", label: "許願池", icon: Star },
-    { href: "/search", label: "搜尋", icon: Search },
+    { href: "/", label: t("nav.home"), icon: Sparkles },
+    { href: "/prompts", label: t("nav.prompts"), icon: Compass },
+    { href: "/trending", label: t("nav.trending"), icon: TrendingUp },
+    { href: "/compare", label: t("nav.compare"), icon: GitCompare },
+    { href: "/guide", label: t("nav.guide"), icon: BookOpen },
+    { href: "/wishlist", label: t("nav.wishlist"), icon: Star },
+    { href: "/search", label: t("nav.search"), icon: Search },
   ];
 
   return (
@@ -67,12 +69,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                  <Globe className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-36">
+                <DropdownMenuItem
+                  onClick={() => setLanguage("zh")}
+                  className={`flex items-center gap-2 ${language === "zh" ? "bg-accent text-accent-foreground" : ""}`}
+                >
+                  🇹🇼 繁體中文
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLanguage("en")}
+                  className={`flex items-center gap-2 ${language === "en" ? "bg-accent text-accent-foreground" : ""}`}
+                >
+                  🇺🇸 English
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {isAuthenticated ? (
               <>
                 <Link href="/create">
                   <Button size="sm" className="gap-2 bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0">
                     <PenSquare className="w-4 h-4" />
-                    <span className="hidden sm:inline">發表文章</span>
+                    <span className="hidden sm:inline">{t("nav.createPost")}</span>
                   </Button>
                 </Link>
                 <NotificationCenter />
@@ -93,19 +118,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <DropdownMenuItem asChild>
                       <Link href={`/profile/${user?.id}`} className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        個人檔案
+                        {t("nav.profile")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/bookmarks" className="flex items-center gap-2">
                         <Bookmark className="w-4 h-4" />
-                        我的收藏
+                        {t("nav.bookmarks")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => logout()} className="flex items-center gap-2 text-destructive">
                       <LogOut className="w-4 h-4" />
-                      登出
+                      {t("nav.logout")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -113,7 +138,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ) : (
               <a href={getLoginUrl()}>
                 <Button size="sm" className="bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0">
-                  登入
+                  {t("nav.login")}
                 </Button>
               </a>
             )}

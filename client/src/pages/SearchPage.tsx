@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import PostCard from "@/components/PostCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -14,6 +15,7 @@ export default function SearchPage() {
   const [tagFilter, setTagFilter] = useState<number | undefined>(undefined);
   const [sortBy, setSortBy] = useState<string>("latest");
   const [submitted, setSubmitted] = useState(false);
+  const { t } = useLanguage();
 
   const { data: tools } = trpc.tools.list.useQuery();
   const { data: tags } = trpc.tags.list.useQuery();
@@ -34,22 +36,22 @@ export default function SearchPage() {
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold text-foreground mb-2">搜尋文章</h1>
-      <p className="text-muted-foreground mb-8">在社群中搜尋您感興趣的內容</p>
+      <h1 className="text-3xl font-bold text-foreground mb-2">{t("search.title")}</h1>
+      <p className="text-muted-foreground mb-8">{t("search.placeholder")}</p>
 
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            placeholder="搜尋文章標題或內容..."
+            placeholder={t("search.placeholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-11 bg-secondary border-border/50 h-12 text-base"
           />
         </div>
         <Button type="submit" size="lg" className="bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0 px-8">
-          搜尋
+          {t("search.title")}
         </Button>
       </form>
 
@@ -58,10 +60,10 @@ export default function SearchPage() {
         <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
         <Select value={toolFilter} onValueChange={(v) => { setToolFilter(v); setSubmitted(true); }}>
           <SelectTrigger className="w-36 bg-background border-border/50">
-            <SelectValue placeholder="所有工具" />
+            <SelectValue placeholder={t("search.filter.all")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">所有工具</SelectItem>
+            <SelectItem value="all">{t("search.filter.all")}</SelectItem>
             {(tools || []).map((tool) => (
               <SelectItem key={tool.id} value={String(tool.id)}>{tool.name}</SelectItem>
             ))}
@@ -69,15 +71,12 @@ export default function SearchPage() {
         </Select>
         <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setSubmitted(true); }}>
           <SelectTrigger className="w-32 bg-background border-border/50">
-            <SelectValue placeholder="所有類型" />
+            <SelectValue placeholder={t("search.filter.all")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">所有類型</SelectItem>
-            <SelectItem value="article">文章</SelectItem>
-            <SelectItem value="prompt">提示詞</SelectItem>
-            <SelectItem value="tutorial">教學</SelectItem>
-            <SelectItem value="question">問題</SelectItem>
-            <SelectItem value="comparison">比較</SelectItem>
+            <SelectItem value="all">{t("search.filter.all")}</SelectItem>
+            <SelectItem value="article">{t("post.type.article")}</SelectItem>
+            <SelectItem value="prompt">{t("post.type.prompt")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setSubmitted(true); }}>
@@ -85,10 +84,9 @@ export default function SearchPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="latest">最新</SelectItem>
-            <SelectItem value="popular">最熱門</SelectItem>
-            <SelectItem value="views">最多瀏覽</SelectItem>
-            <SelectItem value="comments">最多評論</SelectItem>
+            <SelectItem value="latest">{t("search.sort.latest")}</SelectItem>
+            <SelectItem value="popular">{t("search.sort.popular")}</SelectItem>
+            <SelectItem value="views">{t("search.sort.mostLiked")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -100,7 +98,7 @@ export default function SearchPage() {
           className={`cursor-pointer ${tagFilter === undefined ? "bg-primary/20 text-primary border-primary/40" : "hover:bg-secondary"}`}
           onClick={() => { setTagFilter(undefined); setSubmitted(true); }}
         >
-          全部標籤
+          {t("search.filter.all")}
         </Badge>
         {(tags || []).map((tag) => (
           <Badge
@@ -121,7 +119,7 @@ export default function SearchPage() {
         </div>
       ) : results?.posts && results.posts.length > 0 ? (
         <>
-          <p className="text-sm text-muted-foreground mb-4">找到 {results.total} 篇相關文章</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("search.results")}: {results.total}</p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.posts.map((post) => (
               <PostCard key={post.id} post={post} />
@@ -131,13 +129,12 @@ export default function SearchPage() {
       ) : submitted ? (
         <div className="text-center py-20">
           <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">找不到相關文章</h3>
-          <p className="text-muted-foreground">試試其他關鍵字或調整篩選條件</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t("search.noResults")}</h3>
         </div>
       ) : (
         <div className="text-center py-20">
           <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">輸入關鍵字開始搜尋，或使用篩選條件瀏覽文章</p>
+          <p className="text-muted-foreground">{t("search.placeholder")}</p>
         </div>
       )}
     </div>

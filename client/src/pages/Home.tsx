@@ -2,20 +2,11 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowRight, TrendingUp, Eye, Heart, MessageCircle, Users, FileText } from "lucide-react";
+import { Sparkles, ArrowRight, TrendingUp, Users, FileText } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import PostCard from "@/components/PostCard";
-
-const categoryLabels: Record<string, string> = {
-  llm: "大型語言模型",
-  image: "圖像生成",
-  audio: "音訊生成",
-  video: "影片生成",
-  code: "程式碼助手",
-  other: "其他工具",
-};
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const categoryIcons: Record<string, string> = {
   llm: "💬",
@@ -26,8 +17,11 @@ const categoryIcons: Record<string, string> = {
   other: "🔧",
 };
 
+const categoryOrder = ["llm", "image", "audio", "video", "code", "other"];
+
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const { data: tools } = trpc.tools.list.useQuery();
   const { data: trendingPosts } = trpc.posts.trending.useQuery({ limit: 6 });
   const { data: recentData } = trpc.posts.list.useQuery({ limit: 6, sortBy: "latest" });
@@ -38,6 +32,8 @@ export default function Home() {
     acc[tool.category]!.push(tool);
     return acc;
   }, {});
+
+  const orderedCategories = categoryOrder.filter((cat) => toolsByCategory[cat]?.length);
 
   return (
     <div>
@@ -57,37 +53,35 @@ export default function Home() {
             </div>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
-              探索 AI 的無限可能
+              {t("home.badge")}
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              <span className="gradient-text">AI好物誌</span>
+              <span className="gradient-text">{t("home.title1")}</span>
               <br />
-              <span className="text-foreground">AI GoodFinds</span>
+              <span className="text-foreground">{t("home.title2")}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-              在這裡，您可以與全球 AI 愛好者交流使用經驗、分享提示詞技巧、
-              <br className="hidden md:block" />
-              探索各種 AI 工具的最佳實踐，並發現 AI 的無限潛力。
+              {t("home.subtitle")}
             </p>
             <div className="flex items-center justify-center gap-4">
               {isAuthenticated ? (
                 <Link href="/create">
                   <Button size="lg" className="gap-2 bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0 shadow-lg shadow-primary/25">
-                    開始發表文章
+                    {t("home.cta.create")}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
               ) : (
                 <a href={getLoginUrl()}>
                   <Button size="lg" className="gap-2 bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0 shadow-lg shadow-primary/25">
-                    加入社群
+                    {t("home.cta.join")}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </a>
               )}
               <Link href="/guide">
                 <Button variant="outline" size="lg" className="gap-2">
-                  新手指南
+                  {t("home.cta.guide")}
                 </Button>
               </Link>
             </div>
@@ -99,19 +93,18 @@ export default function Home() {
       <section className="container py-16">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">探索 AI 工具</h2>
-            <p className="text-muted-foreground mt-1">選擇您感興趣的 AI 工具，加入討論</p>
+            <h2 className="text-2xl font-bold text-foreground">{t("home.explore")}</h2>
           </div>
         </div>
         <div className="space-y-10">
-          {Object.entries(toolsByCategory).map(([category, categoryTools]) => (
+          {orderedCategories.map((category) => (
             <div key={category}>
               <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <span>{categoryIcons[category] || "🔧"}</span>
-                {categoryLabels[category] || category}
+                {t(`sidebar.${category}`)}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {(categoryTools || []).map((tool) => (
+                {(toolsByCategory[category] || []).map((tool) => (
                   <Link key={tool.id} href={`/tools/${tool.slug}`}>
                     <Card className="group hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 bg-card border-border/50 h-full">
                       <CardContent className="p-4 text-center">
@@ -143,13 +136,12 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                 <TrendingUp className="w-6 h-6 text-primary" />
-                熱門文章
+                {t("home.trending")}
               </h2>
-              <p className="text-muted-foreground mt-1">社群中最受歡迎的討論</p>
             </div>
             <Link href="/trending">
               <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
-                查看更多 <ArrowRight className="w-4 h-4" />
+                {t("home.viewAll")} <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           </div>
@@ -166,8 +158,7 @@ export default function Home() {
         <section className="container py-16">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">最新文章</h2>
-              <p className="text-muted-foreground mt-1">社群中最新發表的內容</p>
+              <h2 className="text-2xl font-bold text-foreground">{t("home.recent")}</h2>
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -175,6 +166,13 @@ export default function Home() {
               <PostCard key={post.id} post={post} />
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Empty State */}
+      {(!trendingPosts || trendingPosts.length === 0) && (!recentData?.posts || recentData.posts.length === 0) && (
+        <section className="container py-16 text-center">
+          <p className="text-muted-foreground text-lg">{t("home.noPosts")}</p>
         </section>
       )}
     </div>

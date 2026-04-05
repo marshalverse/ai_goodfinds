@@ -5,19 +5,21 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Heart, MessageCircle, Info, Check, CheckCheck } from "lucide-react";
+import { Bell, Heart, MessageCircle, Info, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { Link } from "wouter";
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function NotificationCenter() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
+  const { language } = useLanguage();
 
   const { data: unreadCount } = trpc.notifications.unreadCount.useQuery(undefined, {
     enabled: isAuthenticated,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 30000,
   });
 
   const { data: notifications, refetch } = trpc.notifications.list.useQuery(
@@ -67,7 +69,9 @@ export default function NotificationCenter() {
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end" sideOffset={8}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-          <h3 className="font-semibold text-foreground text-sm">通知</h3>
+          <h3 className="font-semibold text-foreground text-sm">
+            {language === "zh" ? "通知" : "Notifications"}
+          </h3>
           {count > 0 && (
             <Button
               variant="ghost"
@@ -76,7 +80,7 @@ export default function NotificationCenter() {
               onClick={() => markAllAsReadMutation.mutate()}
               disabled={markAllAsReadMutation.isPending}
             >
-              <CheckCheck className="w-3.5 h-3.5" /> 全部已讀
+              <CheckCheck className="w-3.5 h-3.5" /> {language === "zh" ? "全部已讀" : "Mark all read"}
             </Button>
           )}
         </div>
@@ -117,7 +121,7 @@ export default function NotificationCenter() {
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: zhTW })}
+                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: language === "zh" ? zhTW : undefined })}
                     </p>
                   </div>
                   {!notif.isRead && (
@@ -129,7 +133,9 @@ export default function NotificationCenter() {
           ) : (
             <div className="py-12 text-center">
               <Bell className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">暫無通知</p>
+              <p className="text-sm text-muted-foreground">
+                {language === "zh" ? "暫無通知" : "No notifications"}
+              </p>
             </div>
           )}
         </ScrollArea>

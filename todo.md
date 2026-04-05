@@ -61,3 +61,9 @@
 ## 第四階段功能
 - [x] 許願池整合 Gmail SMTP 直接寄信到 marshalvision.co@gmail.com
 - [x] 首頁 Hero 區塊加入 Logo 圖案
+
+## 第五階段功能
+- [x] 登入頁面標題改為「AI好物誌」與「AI GoodFinds」
+- [x] 新增「其他」討論版與發文選項
+- [x] 新增更多 AI 工具討論版（Copilot、Manus、Sora、NotebookLM 等）
+- [x] 中英文介面切換功能（i18n 國際化）

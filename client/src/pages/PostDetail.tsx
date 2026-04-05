@@ -10,12 +10,8 @@ import { getLoginUrl } from "@/const";
 import { useState, useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { Streamdown } from "streamdown";
 import { toast } from "sonner";
-
-const postTypeLabels: Record<string, string> = {
-  article: "文章", prompt: "提示詞", tutorial: "教學", question: "問題", comparison: "比較",
-};
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +19,15 @@ export default function PostDetail() {
   const { user, isAuthenticated } = useAuth();
   const [commentText, setCommentText] = useState("");
   const utils = trpc.useUtils();
+  const { t, language } = useLanguage();
+
+  const postTypeLabels: Record<string, string> = {
+    article: t("create.type.article"),
+    prompt: t("create.type.prompt"),
+    tutorial: t("create.type.tutorial"),
+    question: t("create.type.question"),
+    comparison: t("create.type.comparison"),
+  };
 
   const { data: post, isLoading } = trpc.posts.getById.useQuery({ id: postId }, { enabled: postId > 0 });
   const { data: comments } = trpc.comments.getByPostId.useQuery({ postId }, { enabled: postId > 0 });
@@ -39,7 +44,12 @@ export default function PostDetail() {
     onSuccess: () => { utils.posts.getById.invalidate({ id: postId }); utils.bookmarks.userBookmarkedPosts.invalidate(); },
   });
   const commentMutation = trpc.comments.create.useMutation({
-    onSuccess: () => { setCommentText(""); utils.comments.getByPostId.invalidate({ postId }); utils.posts.getById.invalidate({ id: postId }); toast.success("評論已發表"); },
+    onSuccess: () => {
+      setCommentText("");
+      utils.comments.getByPostId.invalidate({ postId });
+      utils.posts.getById.invalidate({ id: postId });
+      toast.success(language === "zh" ? "評論已發表" : "Comment posted");
+    },
   });
 
   if (isLoading) {
@@ -58,8 +68,8 @@ export default function PostDetail() {
   if (!post) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground text-lg">找不到此文章</p>
-        <Link href="/"><Button variant="ghost" className="mt-4">返回首頁</Button></Link>
+        <p className="text-muted-foreground text-lg">{language === "zh" ? "找不到此文章" : "Post not found"}</p>
+        <Link href="/"><Button variant="ghost" className="mt-4">{t("common.back")}</Button></Link>
       </div>
     );
   }
@@ -68,17 +78,16 @@ export default function PostDetail() {
     <div className="container py-8 max-w-4xl mx-auto">
       <Link href={post.tool ? `/tools/${post.tool.slug}` : "/"}>
         <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="w-4 h-4" /> {post.tool ? `返回 ${post.tool.name}` : "返回首頁"}
+          <ArrowLeft className="w-4 h-4" /> {t("common.back")}
         </Button>
       </Link>
 
-      {/* Post Header */}
       <article>
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           {post.tools && post.tools.length > 0 ? (
-            post.tools.map((t: any) => (
-              <Badge key={t.id} variant="outline" style={{ borderColor: `${t.color}40`, color: t.color || undefined }}>
-                {t.name}
+            post.tools.map((tool: any) => (
+              <Badge key={tool.id} variant="outline" style={{ borderColor: `${tool.color}40`, color: tool.color || undefined }}>
+                {tool.name}
               </Badge>
             ))
           ) : post.tool ? (
@@ -94,7 +103,7 @@ export default function PostDetail() {
           {isAuthenticated && user?.id === post.authorId && (
             <Link href={`/create?edit=${post.id}`}>
               <Button variant="outline" size="sm" className="gap-1.5 shrink-0 text-muted-foreground hover:text-foreground">
-                <Pencil className="w-3.5 h-3.5" /> 編輯
+                <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
               </Button>
             </Link>
           )}
@@ -105,14 +114,13 @@ export default function PostDetail() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
               {post.author?.name?.[0]?.toUpperCase() || "U"}
             </div>
-            <span className="font-medium">{post.author?.name || "匿名用戶"}</span>
+            <span className="font-medium">{post.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
           </Link>
           <span>·</span>
-          <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: zhTW })}</span>
+          <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: language === "zh" ? zhTW : undefined })}</span>
           <span className="flex items-center gap-1"><Eye className="w-4 h-4" />{post.viewCount}</span>
         </div>
 
-        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {post.tags.map((tag) => (
@@ -123,10 +131,8 @@ export default function PostDetail() {
           </div>
         )}
 
-        {/* Content */}
         <div className="prose-custom mb-8" dangerouslySetInnerHTML={{ __html: post.content }} />
 
-        {/* Actions Bar */}
         <div className="flex items-center gap-3 py-4 border-t border-b border-border/50 mb-8">
           <Button
             variant="ghost"
@@ -138,7 +144,7 @@ export default function PostDetail() {
             }}
           >
             <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-            {post.likeCount} 讚
+            {post.likeCount} {language === "zh" ? "讚" : "Likes"}
           </Button>
           <Button
             variant="ghost"
@@ -150,30 +156,31 @@ export default function PostDetail() {
             }}
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
-            {post.bookmarkCount} 收藏
+            {post.bookmarkCount} {t("nav.bookmarks")}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className="gap-2 text-muted-foreground hover:text-foreground"
-            onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("連結已複製"); }}
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success(language === "zh" ? "連結已複製" : "Link copied");
+            }}
           >
-            <Share2 className="w-4 h-4" /> 分享
+            <Share2 className="w-4 h-4" /> {language === "zh" ? "分享" : "Share"}
           </Button>
           <span className="ml-auto text-sm text-muted-foreground flex items-center gap-1">
-            <MessageCircle className="w-4 h-4" /> {post.commentCount} 則評論
+            <MessageCircle className="w-4 h-4" /> {post.commentCount} {language === "zh" ? "則評論" : "comments"}
           </span>
         </div>
 
-        {/* Comments Section */}
         <section>
-          <h2 className="text-xl font-bold text-foreground mb-6">評論</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">{language === "zh" ? "評論" : "Comments"}</h2>
 
-          {/* Comment Input */}
           {isAuthenticated ? (
             <div className="mb-8">
               <Textarea
-                placeholder="分享您的想法..."
+                placeholder={language === "zh" ? "分享您的想法..." : "Share your thoughts..."}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 className="bg-secondary border-border/50 min-h-[100px] mb-3"
@@ -185,20 +192,19 @@ export default function PostDetail() {
                   disabled={!commentText.trim() || commentMutation.isPending}
                   onClick={() => commentMutation.mutate({ postId, content: commentText.trim() })}
                 >
-                  <Send className="w-4 h-4" /> 發表評論
+                  <Send className="w-4 h-4" /> {language === "zh" ? "發表評論" : "Post Comment"}
                 </Button>
               </div>
             </div>
           ) : (
             <Card className="mb-8 bg-secondary/50 border-border/30">
               <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground mb-3">登入後即可參與討論</p>
-                <a href={getLoginUrl()}><Button size="sm">登入</Button></a>
+                <p className="text-muted-foreground mb-3">{language === "zh" ? "登入後即可參與討論" : "Login to join the discussion"}</p>
+                <a href={getLoginUrl()}><Button size="sm">{t("nav.login")}</Button></a>
               </CardContent>
             </Card>
           )}
 
-          {/* Comments List */}
           <div className="space-y-4">
             {(comments || []).map((comment) => (
               <Card key={comment.id} className="bg-card border-border/30">
@@ -209,9 +215,9 @@ export default function PostDetail() {
                         {comment.author?.name?.[0]?.toUpperCase() || "U"}
                       </div>
                     </Link>
-                    <span className="text-sm font-medium text-foreground">{comment.author?.name || "匿名用戶"}</span>
+                    <span className="text-sm font-medium text-foreground">{comment.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: zhTW })}
+                      {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: language === "zh" ? zhTW : undefined })}
                     </span>
                   </div>
                   <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
@@ -219,7 +225,9 @@ export default function PostDetail() {
               </Card>
             ))}
             {(!comments || comments.length === 0) && (
-              <p className="text-center text-muted-foreground py-8">尚無評論，成為第一個留言的人吧！</p>
+              <p className="text-center text-muted-foreground py-8">
+                {language === "zh" ? "尚無評論，成為第一個留言的人吧！" : "No comments yet. Be the first to comment!"}
+              </p>
             )}
           </div>
         </section>

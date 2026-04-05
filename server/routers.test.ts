@@ -335,3 +335,44 @@ describe("wishlist.submit", () => {
     }
   });
 });
+
+describe("tools - new tools and categories", () => {
+  it("includes newly added AI tools (Copilot, Manus, Sora, NotebookLM)", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.tools.list();
+    const toolNames = result.map((t: any) => t.name);
+    expect(toolNames).toContain("Copilot");
+    expect(toolNames).toContain("Manus");
+    expect(toolNames).toContain("Sora");
+    expect(toolNames).toContain("NotebookLM");
+  });
+
+  it("includes 'Other' category tool", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.tools.list();
+    const otherTools = result.filter((t: any) => t.category === "other");
+    expect(otherTools.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("has multiple categories", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.tools.list();
+    const categories = [...new Set(result.map((t: any) => t.category))];
+    expect(categories.length).toBeGreaterThanOrEqual(3);
+    expect(categories).toContain("llm");
+    expect(categories).toContain("image");
+  });
+});
+
+describe("search.posts", () => {
+  it("returns results with search query", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.posts.list({ limit: 5, search: "test" });
+    expect(result).toHaveProperty("posts");
+    expect(result).toHaveProperty("total");
+  });
+});

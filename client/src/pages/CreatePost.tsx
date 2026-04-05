@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Send, Globe, Sparkles, Loader2, Wand2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import { Link, useLocation, useSearch, useParams } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import RichTextEditor from "@/components/RichTextEditor";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function CreatePost() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -22,6 +23,7 @@ export default function CreatePost() {
   const preselectedTool = params.get("tool");
   const preselectedType = params.get("postType");
   const editId = params.get("edit");
+  const { t, language } = useLanguage();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -43,7 +45,6 @@ export default function CreatePost() {
 
   const allToolIds = useMemo(() => (tools || []).map(t => t.id), [tools]);
 
-  // Load existing post data for editing
   useEffect(() => {
     if (existingPost && editId) {
       setIsEditMode(true);
@@ -64,36 +65,36 @@ export default function CreatePost() {
 
   const createMutation = trpc.posts.create.useMutation({
     onSuccess: (data) => {
-      toast.success("文章發表成功！");
+      toast.success(language === "zh" ? "文章發表成功！" : "Post published successfully!");
       navigate(`/posts/${data.id}`);
     },
-    onError: (err) => toast.error("發表失敗：" + err.message),
+    onError: (err) => toast.error((language === "zh" ? "發表失敗：" : "Failed: ") + err.message),
   });
 
   const updateMutation = trpc.posts.update.useMutation({
     onSuccess: () => {
-      toast.success("文章更新成功！");
+      toast.success(language === "zh" ? "文章更新成功！" : "Post updated successfully!");
       navigate(`/posts/${editId}`);
     },
-    onError: (err) => toast.error("更新失敗：" + err.message),
+    onError: (err) => toast.error((language === "zh" ? "更新失敗：" : "Update failed: ") + err.message),
   });
 
   const summarizeMutation = trpc.ai.generateSummary.useMutation({
     onSuccess: (data) => {
       const text = typeof data.summary === "string" ? data.summary : "";
       setSummary(text);
-      toast.success("摘要已自動生成！");
+      toast.success(language === "zh" ? "摘要已自動生成！" : "Summary generated!");
     },
-    onError: () => toast.error("摘要生成失敗，請重試"),
+    onError: () => toast.error(language === "zh" ? "摘要生成失敗，請重試" : "Summary generation failed"),
   });
 
   const optimizeMutation = trpc.ai.optimizePrompt.useMutation({
     onSuccess: (data) => {
       const text = typeof data.result === "string" ? data.result : "";
       setContent(text);
-      toast.success("提示詞已優化！");
+      toast.success(language === "zh" ? "提示詞已優化！" : "Prompt optimized!");
     },
-    onError: () => toast.error("優化失敗，請重試"),
+    onError: () => toast.error(language === "zh" ? "優化失敗，請重試" : "Optimization failed"),
   });
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function CreatePost() {
   if (loading || !isAuthenticated) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">載入中...</p>
+        <p className="text-muted-foreground">{language === "zh" ? "載入中..." : "Loading..."}</p>
       </div>
     );
   }
@@ -129,9 +130,9 @@ export default function CreatePost() {
   };
 
   const handleSubmit = () => {
-    if (!title.trim()) { toast.error("請輸入標題"); return; }
-    if (!content.trim()) { toast.error("請輸入內容"); return; }
-    if (selectedToolIds.length === 0) { toast.error("請至少選擇一個 AI 工具"); return; }
+    if (!title.trim()) { toast.error(language === "zh" ? "請輸入標題" : "Please enter a title"); return; }
+    if (!content.trim()) { toast.error(language === "zh" ? "請輸入內容" : "Please enter content"); return; }
+    if (selectedToolIds.length === 0) { toast.error(language === "zh" ? "請至少選擇一個 AI 工具" : "Please select at least one AI tool"); return; }
 
     if (isEditMode && editId) {
       updateMutation.mutate({
@@ -164,14 +165,13 @@ export default function CreatePost() {
   };
 
   const handleGenerateSummary = () => {
-    if (!content.trim()) { toast.error("請先撰寫文章內容"); return; }
-    // Strip HTML tags for summary generation
+    if (!content.trim()) { toast.error(language === "zh" ? "請先撰寫文章內容" : "Please write content first"); return; }
     const textContent = content.replace(/<[^>]*>/g, "");
     summarizeMutation.mutate({ content: textContent, title: title.trim() || undefined });
   };
 
   const handleOptimizePrompt = () => {
-    if (!content.trim()) { toast.error("請先輸入提示詞內容"); return; }
+    if (!content.trim()) { toast.error(language === "zh" ? "請先輸入提示詞內容" : "Please enter prompt content first"); return; }
     const textContent = content.replace(/<[^>]*>/g, "");
     const toolName = tools?.find(t => selectedToolIds.includes(t.id))?.name;
     optimizeMutation.mutate({ prompt: textContent, toolName });
@@ -186,9 +186,12 @@ export default function CreatePost() {
     }, {});
   }, [tools]);
 
-  const categoryLabels: Record<string, string> = {
+  const categoryLabels: Record<string, string> = language === "zh" ? {
     llm: "大型語言模型", image: "圖像生成", audio: "音訊生成",
     video: "影片生成", code: "程式開發", other: "其他",
+  } : {
+    llm: "Language Models", image: "Image Generation", audio: "Audio Generation",
+    video: "Video Generation", code: "Code Development", other: "Other",
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -197,34 +200,35 @@ export default function CreatePost() {
     <div className="container py-8 max-w-5xl mx-auto">
       <Link href="/">
         <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="w-4 h-4" /> 返回
+          <ArrowLeft className="w-4 h-4" /> {t("common.back")}
         </Button>
       </Link>
 
       <h1 className="text-3xl font-bold text-foreground mb-8">
-        {isEditMode ? "編輯文章" : "發表新文章"}
+        {isEditMode ? t("create.editTitle") : t("create.title")}
       </h1>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main Editor */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Title */}
           <div>
-            <Label htmlFor="title" className="text-sm font-medium text-foreground mb-2 block">標題</Label>
+            <Label htmlFor="title" className="text-sm font-medium text-foreground mb-2 block">
+              {language === "zh" ? "標題" : "Title"}
+            </Label>
             <Input
               id="title"
-              placeholder="輸入文章標題..."
+              placeholder={language === "zh" ? "輸入文章標題..." : "Enter post title..."}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="bg-secondary border-border/50 text-lg"
             />
           </div>
 
-          {/* Summary with AI */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label htmlFor="summary" className="text-sm font-medium text-foreground">
-                摘要 <span className="text-muted-foreground font-normal">（選填）</span>
+                {language === "zh" ? "摘要" : "Summary"} <span className="text-muted-foreground font-normal">
+                  ({language === "zh" ? "選填" : "Optional"})
+                </span>
               </Label>
               <Button
                 type="button"
@@ -239,23 +243,24 @@ export default function CreatePost() {
                 ) : (
                   <Sparkles className="w-3 h-3" />
                 )}
-                AI 自動生成摘要
+                {language === "zh" ? "AI 自動生成摘要" : "AI Generate Summary"}
               </Button>
             </div>
             <Input
               id="summary"
-              placeholder="簡短描述文章內容..."
+              placeholder={language === "zh" ? "簡短描述文章內容..." : "Brief description..."}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               className="bg-secondary border-border/50"
             />
           </div>
 
-          {/* Rich Text Editor */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="text-sm font-medium text-foreground">
-                內容 <span className="text-muted-foreground font-normal">（支援富文本格式）</span>
+                {language === "zh" ? "內容" : "Content"} <span className="text-muted-foreground font-normal">
+                  ({language === "zh" ? "支援富文本格式" : "Rich text supported"})
+                </span>
               </Label>
               {postType === "prompt" && (
                 <Button
@@ -271,24 +276,26 @@ export default function CreatePost() {
                   ) : (
                     <Wand2 className="w-3 h-3" />
                   )}
-                  AI 優化提示詞
+                  {language === "zh" ? "AI 優化提示詞" : "AI Optimize Prompt"}
                 </Button>
               )}
             </div>
             <RichTextEditor
               content={content}
               onChange={setContent}
-              placeholder="開始撰寫您的文章..."
+              placeholder={language === "zh" ? "開始撰寫您的文章..." : "Start writing your article..."}
             />
           </div>
         </div>
 
-        {/* Sidebar Settings */}
         <div className="space-y-6">
-          {/* Tool Selection */}
           <Card className="bg-card border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">AI 工具 <span className="text-muted-foreground font-normal">（可複選）</span></CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {language === "zh" ? "AI 工具" : "AI Tools"} <span className="text-muted-foreground font-normal">
+                  ({language === "zh" ? "可複選" : "Multi-select"})
+                </span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div
@@ -299,7 +306,7 @@ export default function CreatePost() {
               >
                 <Checkbox checked={isAllSelected} onCheckedChange={handleToggleAll} className="data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
                 <Globe className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">ALL（所有工具）</span>
+                <span className="text-sm font-medium text-foreground">ALL ({language === "zh" ? "所有工具" : "All Tools"})</span>
               </div>
 
               <div className="max-h-[320px] overflow-y-auto space-y-3 pr-1">
@@ -329,35 +336,35 @@ export default function CreatePost() {
 
               {selectedToolIds.length > 0 && (
                 <p className="text-xs text-muted-foreground pt-1">
-                  已選擇 {isAllSelected ? "所有" : selectedToolIds.length} 個工具
+                  {language === "zh"
+                    ? `已選擇 ${isAllSelected ? "所有" : selectedToolIds.length} 個工具`
+                    : `${isAllSelected ? "All" : selectedToolIds.length} tool(s) selected`}
                 </p>
               )}
             </CardContent>
           </Card>
 
-          {/* Post Type */}
           <Card className="bg-card border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">文章類型</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("create.postType")}</CardTitle>
             </CardHeader>
             <CardContent>
               <Select value={postType} onValueChange={setPostType}>
                 <SelectTrigger className="bg-secondary border-border/50"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="article">文章</SelectItem>
-                  <SelectItem value="prompt">提示詞分享</SelectItem>
-                  <SelectItem value="tutorial">教學</SelectItem>
-                  <SelectItem value="question">問題求助</SelectItem>
-                  <SelectItem value="comparison">工具比較</SelectItem>
+                  <SelectItem value="article">{t("create.type.article")}</SelectItem>
+                  <SelectItem value="prompt">{t("create.type.prompt")}</SelectItem>
+                  <SelectItem value="tutorial">{t("create.type.tutorial")}</SelectItem>
+                  <SelectItem value="question">{t("create.type.question")}</SelectItem>
+                  <SelectItem value="comparison">{t("create.type.comparison")}</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>
           </Card>
 
-          {/* Tags */}
           <Card className="bg-card border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">標籤</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("create.tags")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -377,7 +384,6 @@ export default function CreatePost() {
             </CardContent>
           </Card>
 
-          {/* Submit */}
           <Button
             className="w-full gap-2 bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0 shadow-lg shadow-primary/20"
             size="lg"
@@ -389,7 +395,11 @@ export default function CreatePost() {
             ) : (
               <Send className="w-4 h-4" />
             )}
-            {isPending ? "處理中..." : isEditMode ? "更新文章" : "發表文章"}
+            {isPending
+              ? (language === "zh" ? "處理中..." : "Processing...")
+              : isEditMode
+                ? t("create.update")
+                : t("create.publish")}
           </Button>
         </div>
       </div>
