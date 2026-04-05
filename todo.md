@@ -60,3 +60,4 @@
 
 ## 第四階段功能
 - [x] 許願池整合 Gmail SMTP 直接寄信到 marshalvision.co@gmail.com
+- [x] 首頁 Hero 區塊加入 Logo 圖案

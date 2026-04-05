@@ -48,6 +48,13 @@ export default function Home() {
         <div className="absolute top-40 right-1/4 w-72 h-72 bg-[oklch(0.6_0.2_260_/_5%)] rounded-full blur-3xl" />
         <div className="container relative py-20 md:py-28">
           <div className="max-w-3xl mx-auto text-center">
+            <div className="mb-6">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663513894733/EMmCrr8wS6ruYCgz6zaGkz/logo_8b48a01d.png"
+                alt="AI好物誌"
+                className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-2xl shadow-2xl shadow-primary/30 ring-2 ring-primary/20"
+              />
+            </div>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
               探索 AI 的無限可能
