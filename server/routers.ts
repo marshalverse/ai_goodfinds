@@ -8,6 +8,7 @@ import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 import { nanoid } from "nanoid";
 import { notifyOwner } from "./_core/notification";
+import nodemailer from "nodemailer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -274,11 +275,49 @@ export const appRouter = router({
       content: z.string().min(1).max(5000),
       email: z.string().email().optional(),
     })).mutation(async ({ input }) => {
-      // Notify owner via built-in notification
-      await notifyOwner({
-        title: `[許願池] ${input.subject}`,
-        content: `來自使用者的許願：\n\n主旨：${input.subject}\n${input.email ? `聯絡信箱：${input.email}\n` : ""}\n內容：\n${input.content}`,
+      const gmailUser = process.env.GMAIL_USER;
+      const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+      if (!gmailUser || !gmailPass) {
+        throw new Error("郵件服務未設定，請聯繫管理員。");
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: gmailUser,
+          pass: gmailPass,
+        },
       });
+
+      const htmlContent = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #7c3aed;">AI好物誌 - 許願池新建議</h2>
+          <hr style="border: 1px solid #e5e7eb;" />
+          <p><strong>主旨：</strong>${input.subject}</p>
+          ${input.email ? `<p><strong>聯絡信箱：</strong>${input.email}</p>` : ""}
+          <p><strong>內容：</strong></p>
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${input.content}</div>
+          <hr style="border: 1px solid #e5e7eb; margin-top: 24px;" />
+          <p style="color: #9ca3af; font-size: 12px;">此郵件由 AI好物誌 許願池系統自動發送</p>
+        </div>
+      `;
+
+      await transporter.sendMail({
+        from: `"AI好物誌" <${gmailUser}>`,
+        to: "marshalvision.co@gmail.com",
+        subject: `[AI好物誌 許願池] ${input.subject}`,
+        html: htmlContent,
+      });
+
+      // Also notify owner via built-in notification as backup
+      try {
+        await notifyOwner({
+          title: `[許願池] ${input.subject}`,
+          content: `主旨：${input.subject}\n${input.email ? `聯絡信箱：${input.email}\n` : ""}\n內容：\n${input.content}`,
+        });
+      } catch (_) { /* backup notification, ignore errors */ }
+
       return { success: true };
     }),
   }),

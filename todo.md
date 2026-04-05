@@ -57,3 +57,6 @@
 - [x] 發表文章字體大小調整功能
 - [x] 所有頁面 Footer 加上公司名稱（marshalvision.co）與聯絡方式
 - [x] Logo 更換為魔法書徽章圖片
+
+## 第四階段功能
+- [x] 許願池整合 Gmail SMTP 直接寄信到 marshalvision.co@gmail.com
