@@ -171,6 +171,7 @@ const zh: Record<string, string> = {
   "create.type.tutorial": "教學",
   "create.type.question": "問題求助",
   "create.type.comparison": "工具比較",
+  "create.type.other": "其他",
 
   // Common
   "common.loading": "載入中...",
@@ -354,6 +355,7 @@ const en: Record<string, string> = {
   "create.type.tutorial": "Tutorial",
   "create.type.question": "Question",
   "create.type.comparison": "Comparison",
+  "create.type.other": "Other",
 
   // Common
   "common.loading": "Loading...",

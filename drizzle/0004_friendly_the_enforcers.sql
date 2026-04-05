@@ -1,0 +1,1 @@
+ALTER TABLE `posts` MODIFY COLUMN `postType` enum('article','prompt','tutorial','question','comparison','other') NOT NULL DEFAULT 'article';

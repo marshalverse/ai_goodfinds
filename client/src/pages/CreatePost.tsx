@@ -357,6 +357,7 @@ export default function CreatePost() {
                   <SelectItem value="tutorial">{t("create.type.tutorial")}</SelectItem>
                   <SelectItem value="question">{t("create.type.question")}</SelectItem>
                   <SelectItem value="comparison">{t("create.type.comparison")}</SelectItem>
+                  <SelectItem value="other">{t("create.type.other")}</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>

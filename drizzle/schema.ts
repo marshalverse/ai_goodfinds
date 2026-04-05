@@ -63,7 +63,7 @@ export const posts = mysqlTable("posts", {
   title: varchar("title", { length: 300 }).notNull(),
   content: text("content").notNull(),
   summary: text("summary"),
-  postType: mysqlEnum("postType", ["article", "prompt", "tutorial", "question", "comparison"]).default("article").notNull(),
+  postType: mysqlEnum("postType", ["article", "prompt", "tutorial", "question", "comparison", "other"]).default("article").notNull(),
   likeCount: int("likeCount").default(0).notNull(),
   commentCount: int("commentCount").default(0).notNull(),
   bookmarkCount: int("bookmarkCount").default(0).notNull(),
