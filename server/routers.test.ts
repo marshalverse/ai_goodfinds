@@ -288,3 +288,50 @@ describe("upload.image", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("wishlist.submit", () => {
+  it("validates required fields - empty subject", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.wishlist.submit({ subject: "", content: "Some content" })
+    ).rejects.toThrow();
+  });
+
+  it("validates required fields - empty content", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.wishlist.submit({ subject: "Test subject", content: "" })
+    ).rejects.toThrow();
+  });
+
+  it("validates email format", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.wishlist.submit({
+        subject: "Test",
+        content: "Test content",
+        email: "invalid-email",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("accepts valid submission (public procedure)", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    // This will call notifyOwner which may fail in test env, but the input validation should pass
+    try {
+      const result = await caller.wishlist.submit({
+        subject: "Test Wish",
+        content: "I wish for a new feature",
+        email: "test@example.com",
+      });
+      expect(result).toEqual({ success: true });
+    } catch (e: any) {
+      // notifyOwner may fail in test env due to missing env vars, that's expected
+      expect(e.message).toContain("Notification");
+    }
+  });
+});

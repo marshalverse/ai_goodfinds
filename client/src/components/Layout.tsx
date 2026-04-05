@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
   Search, PenSquare, Bookmark, TrendingUp, Compass, GitCompare,
-  BookOpen, LogOut, User, Menu, X, Sparkles
+  BookOpen, LogOut, User, Menu, X, Sparkles, Star
 } from "lucide-react";
 import { useState } from "react";
 import NotificationCenter from "@/components/NotificationCenter";
+import Footer from "@/components/Footer";
+import ToolSidebar from "@/components/ToolSidebar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663513894733/EMmCrr8wS6ruYCgz6zaGkz/logo_8b48a01d.png";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
@@ -23,19 +27,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/trending", label: "熱門", icon: TrendingUp },
     { href: "/compare", label: "工具比較", icon: GitCompare },
     { href: "/guide", label: "新手指南", icon: BookOpen },
+    { href: "/wishlist", label: "許願池", icon: Star },
     { href: "/search", label: "搜尋", icon: Search },
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top Navigation */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">
-              <Compass className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src={LOGO_URL}
+              alt="AI好物誌"
+              className="w-9 h-9 rounded-xl shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow"
+            />
             <span className="text-lg font-bold gradient-text hidden sm:block">AI好物誌</span>
           </Link>
 
@@ -146,17 +153,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="min-h-[calc(100vh-4rem)]">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-8 mt-16">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} AI GoodFinds. 探索、分享、交流 AI 的無限可能。</p>
+      {/* Body: Sidebar + Main */}
+      <div className="flex flex-1">
+        <ToolSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

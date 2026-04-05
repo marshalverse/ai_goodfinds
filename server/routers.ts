@@ -7,6 +7,7 @@ import * as db from "./db";
 import { storagePut } from "./storage";
 import { invokeLLM } from "./_core/llm";
 import { nanoid } from "nanoid";
+import { notifyOwner } from "./_core/notification";
 
 export const appRouter = router({
   system: systemRouter,
@@ -263,6 +264,22 @@ export const appRouter = router({
         ],
       });
       return { summary: response.choices[0]?.message?.content || "" };
+    }),
+  }),
+
+  // ===== Wishlist (許願池) =====
+  wishlist: router({
+    submit: publicProcedure.input(z.object({
+      subject: z.string().min(1).max(200),
+      content: z.string().min(1).max(5000),
+      email: z.string().email().optional(),
+    })).mutation(async ({ input }) => {
+      // Notify owner via built-in notification
+      await notifyOwner({
+        title: `[許願池] ${input.subject}`,
+        content: `來自使用者的許願：\n\n主旨：${input.subject}\n${input.email ? `聯絡信箱：${input.email}\n` : ""}\n內容：\n${input.content}`,
+      });
+      return { success: true };
     }),
   }),
 

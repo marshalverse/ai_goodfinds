@@ -15,6 +15,7 @@ import GuidePage from "./pages/GuidePage";
 import TrendingPage from "./pages/TrendingPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import PromptsPage from "./pages/PromptsPage";
+import WishlistPage from "./pages/WishlistPage";
 import Layout from "./components/Layout";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/trending" component={TrendingPage} />
         <Route path="/bookmarks" component={BookmarksPage} />
         <Route path="/prompts" component={PromptsPage} />
+        <Route path="/wishlist" component={WishlistPage} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

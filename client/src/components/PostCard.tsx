@@ -1,9 +1,10 @@
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, Eye, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
+import { useMemo } from "react";
 
 const postTypeLabels: Record<string, string> = {
   article: "文章",
@@ -40,13 +41,37 @@ interface PostCardProps {
   };
 }
 
+function extractFirstImage(htmlContent: string): string | null {
+  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/i;
+  const match = htmlContent.match(imgRegex);
+  return match?.[1] || null;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
+}
+
 export default function PostCard({ post }: PostCardProps) {
-  const excerpt = post.summary || post.content.slice(0, 120).replace(/[#*`\n]/g, "") + "...";
+  const thumbnail = useMemo(() => extractFirstImage(post.content), [post.content]);
+  const excerpt = post.summary || stripHtml(post.content).slice(0, 120) + "...";
 
   return (
     <Link href={`/posts/${post.id}`}>
-      <Card className="group h-full hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 bg-card border-border/50">
-        <CardContent className="p-5">
+      <Card className="group h-full hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 bg-card border-border/50 overflow-hidden">
+        {/* Thumbnail */}
+        {thumbnail && (
+          <div className="relative w-full h-40 overflow-hidden bg-muted/20">
+            <img
+              src={thumbnail}
+              alt={post.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+          </div>
+        )}
+
+        <CardContent className={`p-5 ${thumbnail ? "pt-3" : ""}`}>
           {/* Top: Tool badges + Post type */}
           <div className="flex items-center gap-1.5 mb-3 flex-wrap">
             {post.tools && post.tools.length > 0 ? (
