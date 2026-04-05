@@ -38,6 +38,7 @@ export const appRouter = router({
   posts: router({
     create: protectedProcedure.input(z.object({
       toolId: z.number(),
+      toolIds: z.array(z.number()).optional(),
       title: z.string().min(1).max(300),
       content: z.string().min(1),
       summary: z.string().optional(),
@@ -47,6 +48,7 @@ export const appRouter = router({
       const postId = await db.createPost({
         authorId: ctx.user.id,
         toolId: input.toolId,
+        toolIds: input.toolIds,
         title: input.title,
         content: input.content,
         summary: input.summary,

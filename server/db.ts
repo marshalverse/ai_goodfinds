@@ -1,7 +1,7 @@
 import { eq, and, desc, asc, sql, like, or, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
-  InsertUser, users, aiTools, posts, comments, likes, bookmarks, tags, postTags, userToolPreferences,
+  InsertUser, users, aiTools, posts, comments, likes, bookmarks, tags, postTags, postTools, userToolPreferences,
   type AiTool, type Post, type Comment, type Tag
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -83,7 +83,7 @@ export async function getAllTags() {
 
 // ===== Posts =====
 export async function createPost(data: {
-  authorId: number; toolId: number; title: string; content: string;
+  authorId: number; toolId: number; toolIds?: number[]; title: string; content: string;
   summary?: string; postType?: string; tagIds?: number[];
 }) {
   const db = await getDb();
@@ -97,11 +97,16 @@ export async function createPost(data: {
     postType: (data.postType as any) || "article",
   });
   const postId = result.insertId;
+  // Insert post-tool associations
+  const allToolIds = data.toolIds && data.toolIds.length > 0 ? data.toolIds : [data.toolId];
+  await db.insert(postTools).values(allToolIds.map(toolId => ({ postId, toolId })));
   if (data.tagIds && data.tagIds.length > 0) {
     await db.insert(postTags).values(data.tagIds.map(tagId => ({ postId, tagId })));
   }
-  // Increment tool post count
-  await db.update(aiTools).set({ postCount: sql`${aiTools.postCount} + 1` }).where(eq(aiTools.id, data.toolId));
+  // Increment tool post count for all associated tools
+  for (const tid of allToolIds) {
+    await db.update(aiTools).set({ postCount: sql`${aiTools.postCount} + 1` }).where(eq(aiTools.id, tid));
+  }
   return postId;
 }
 
@@ -114,15 +119,23 @@ export async function getPostById(id: number) {
   await db.update(posts).set({ viewCount: sql`${posts.viewCount} + 1` }).where(eq(posts.id, id));
   // Get author info
   const author = await db.select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, result[0].authorId)).limit(1);
-  // Get tool info
+  // Get primary tool info
   const tool = await db.select().from(aiTools).where(eq(aiTools.id, result[0].toolId)).limit(1);
+  // Get all associated tools
+  const ptoolRows = await db.select({ toolId: postTools.toolId }).from(postTools).where(eq(postTools.postId, id));
+  let allTools: any[] = [];
+  if (ptoolRows.length > 0) {
+    allTools = await db.select({ id: aiTools.id, name: aiTools.name, slug: aiTools.slug, color: aiTools.color }).from(aiTools).where(inArray(aiTools.id, ptoolRows.map(pt => pt.toolId)));
+  } else {
+    allTools = tool.length > 0 ? [{ id: tool[0].id, name: tool[0].name, slug: tool[0].slug, color: tool[0].color }] : [];
+  }
   // Get tags
   const postTagRows = await db.select({ tagId: postTags.tagId }).from(postTags).where(eq(postTags.postId, id));
   let postTagList: Tag[] = [];
   if (postTagRows.length > 0) {
     postTagList = await db.select().from(tags).where(inArray(tags.id, postTagRows.map(pt => pt.tagId)));
   }
-  return { ...result[0], viewCount: result[0].viewCount + 1, author: author[0], tool: tool[0], tags: postTagList };
+  return { ...result[0], viewCount: result[0].viewCount + 1, author: author[0], tool: tool[0], tools: allTools, tags: postTagList };
 }
 
 export async function getPosts(params: {
@@ -175,12 +188,20 @@ export async function getPosts(params: {
   const enriched = await Promise.all(postRows.map(async (post) => {
     const author = await db.select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, post.authorId)).limit(1);
     const tool = await db.select({ id: aiTools.id, name: aiTools.name, slug: aiTools.slug, color: aiTools.color }).from(aiTools).where(eq(aiTools.id, post.toolId)).limit(1);
+    // Get all associated tools
+    const ptoolRows = await db.select({ toolId: postTools.toolId }).from(postTools).where(eq(postTools.postId, post.id));
+    let allTools: any[] = [];
+    if (ptoolRows.length > 0) {
+      allTools = await db.select({ id: aiTools.id, name: aiTools.name, slug: aiTools.slug, color: aiTools.color }).from(aiTools).where(inArray(aiTools.id, ptoolRows.map(pt => pt.toolId)));
+    } else {
+      allTools = tool.length > 0 ? [tool[0]] : [];
+    }
     const ptRows = await db.select({ tagId: postTags.tagId }).from(postTags).where(eq(postTags.postId, post.id));
     let postTagList: any[] = [];
     if (ptRows.length > 0) {
       postTagList = await db.select().from(tags).where(inArray(tags.id, ptRows.map(pt => pt.tagId)));
     }
-    return { ...post, author: author[0], tool: tool[0], tags: postTagList };
+    return { ...post, author: author[0], tool: tool[0], tools: allTools, tags: postTagList };
   }));
 
   return { posts: enriched, total };

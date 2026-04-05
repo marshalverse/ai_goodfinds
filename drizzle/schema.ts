@@ -95,6 +95,19 @@ export const postTags = mysqlTable("post_tags", {
 export type PostTag = typeof postTags.$inferSelect;
 
 /**
+ * Post-tool many-to-many relation (a post can relate to multiple AI tools)
+ */
+export const postTools = mysqlTable("post_tools", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  toolId: int("toolId").notNull(),
+}, (table) => [
+  uniqueIndex("post_tools_unique").on(table.postId, table.toolId),
+]);
+
+export type PostTool = typeof postTools.$inferSelect;
+
+/**
  * Comments on posts
  */
 export const comments = mysqlTable("comments", {

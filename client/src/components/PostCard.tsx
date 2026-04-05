@@ -35,6 +35,7 @@ interface PostCardProps {
     createdAt: Date;
     author?: { id: number; name: string | null; avatarUrl?: string | null } | null;
     tool?: { id: number; name: string; slug: string; color: string | null } | null;
+    tools?: { id: number; name: string; slug: string; color: string | null }[];
     tags?: { id: number; name: string; color: string | null }[];
   };
 }
@@ -46,12 +47,21 @@ export default function PostCard({ post }: PostCardProps) {
     <Link href={`/posts/${post.id}`}>
       <Card className="group h-full hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 bg-card border-border/50">
         <CardContent className="p-5">
-          {/* Top: Tool badge + Post type */}
-          <div className="flex items-center gap-2 mb-3">
-            {post.tool && (
+          {/* Top: Tool badges + Post type */}
+          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+            {post.tools && post.tools.length > 0 ? (
+              post.tools.slice(0, 3).map((t) => (
+                <Badge key={t.id} variant="outline" className="text-xs font-medium border-border/60" style={{ borderColor: `${t.color}40`, color: t.color || undefined }}>
+                  {t.name}
+                </Badge>
+              ))
+            ) : post.tool ? (
               <Badge variant="outline" className="text-xs font-medium border-border/60" style={{ borderColor: `${post.tool.color}40`, color: post.tool.color || undefined }}>
                 {post.tool.name}
               </Badge>
+            ) : null}
+            {post.tools && post.tools.length > 3 && (
+              <Badge variant="outline" className="text-xs text-muted-foreground">+{post.tools.length - 3}</Badge>
             )}
             <Badge variant="outline" className={`text-xs ${postTypeColors[post.postType] || ""}`}>
               {postTypeLabels[post.postType] || post.postType}

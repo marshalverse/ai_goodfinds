@@ -74,12 +74,18 @@ export default function PostDetail() {
 
       {/* Post Header */}
       <article>
-        <div className="flex items-center gap-2 mb-4">
-          {post.tool && (
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {post.tools && post.tools.length > 0 ? (
+            post.tools.map((t: any) => (
+              <Badge key={t.id} variant="outline" style={{ borderColor: `${t.color}40`, color: t.color || undefined }}>
+                {t.name}
+              </Badge>
+            ))
+          ) : post.tool ? (
             <Badge variant="outline" style={{ borderColor: `${post.tool.color}40`, color: post.tool.color || undefined }}>
               {post.tool.name}
             </Badge>
-          )}
+          ) : null}
           <Badge variant="outline">{postTypeLabels[post.postType] || post.postType}</Badge>
         </div>
 

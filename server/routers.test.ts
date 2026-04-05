@@ -116,6 +116,32 @@ describe("posts.create", () => {
       })
     ).rejects.toThrow();
   });
+
+  it("accepts toolIds array for multi-tool selection", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    // Should not throw with valid toolIds array
+    const result = await caller.posts.create({
+      toolId: 1,
+      toolIds: [1, 2, 3],
+      title: "Multi-tool Test Post",
+      content: "Testing multi-tool selection feature",
+      postType: "comparison",
+    });
+    expect(result).toHaveProperty("id");
+    expect(typeof result.id).toBe("number");
+  });
+
+  it("works with single toolId and no toolIds", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.posts.create({
+      toolId: 1,
+      title: "Single tool Test Post",
+      content: "Testing single tool selection",
+    });
+    expect(result).toHaveProperty("id");
+  });
 });
 
 describe("comments.create", () => {

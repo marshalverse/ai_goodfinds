@@ -15,6 +15,13 @@
       "when": 1775366967011,
       "tag": "0001_safe_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775388458041,
+      "tag": "0002_modern_juggernaut",
+      "breakpoints": true
     }
   ]
 }
