@@ -5,31 +5,45 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import ToolPage from "./pages/ToolPage";
+import PostDetail from "./pages/PostDetail";
+import CreatePost from "./pages/CreatePost";
+import ProfilePage from "./pages/ProfilePage";
+import SearchPage from "./pages/SearchPage";
+import ComparePage from "./pages/ComparePage";
+import GuidePage from "./pages/GuidePage";
+import TrendingPage from "./pages/TrendingPage";
+import BookmarksPage from "./pages/BookmarksPage";
+import PromptsPage from "./pages/PromptsPage";
+import Layout from "./components/Layout";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <Layout>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/tools/:slug" component={ToolPage} />
+        <Route path="/posts/:id" component={PostDetail} />
+        <Route path="/create" component={CreatePost} />
+        <Route path="/profile/:id" component={ProfilePage} />
+        <Route path="/search" component={SearchPage} />
+        <Route path="/compare" component={ComparePage} />
+        <Route path="/guide" component={GuidePage} />
+        <Route path="/guide/:slug" component={GuidePage} />
+        <Route path="/trending" component={TrendingPage} />
+        <Route path="/bookmarks" component={BookmarksPage} />
+        <Route path="/prompts" component={PromptsPage} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />
