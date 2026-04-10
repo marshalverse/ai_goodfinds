@@ -80,16 +80,7 @@ export default function SearchPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setSubmitted(true); }}>
-          <SelectTrigger className="w-32 bg-background border-border/50">
-            <SelectValue placeholder={t("search.filter.all")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("search.filter.all")}</SelectItem>
-            <SelectItem value="article">{t("post.type.article")}</SelectItem>
-            <SelectItem value="prompt">{t("post.type.prompt")}</SelectItem>
-          </SelectContent>
-        </Select>
+
         <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setSubmitted(true); }}>
           <SelectTrigger className="w-32 bg-background border-border/50">
             <SelectValue />

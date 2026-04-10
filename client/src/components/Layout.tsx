@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
   Search, PenSquare, Bookmark, TrendingUp, Compass, GitCompare,
-  BookOpen, LogOut, User, Menu, X, Sparkles, Star, Globe
+  BookOpen, LogOut, User, Menu, X, Sparkles, Star, Globe, Clock, Palette
 } from "lucide-react";
 import { useState } from "react";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -24,9 +24,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { language, setLanguage, t } = useLanguage();
 
   const navItems = [
-    { href: "/", label: t("nav.home"), icon: Sparkles },
-    { href: "/prompts", label: t("nav.prompts"), icon: Compass },
+    { href: "/latest", label: t("nav.latest"), icon: Clock },
     { href: "/trending", label: t("nav.trending"), icon: TrendingUp },
+    { href: "/showcase", label: t("nav.showcase"), icon: Palette },
+    { href: "/prompts", label: t("nav.prompts"), icon: Compass },
     { href: "/compare", label: t("nav.compare"), icon: GitCompare },
     { href: "/guide", label: t("nav.guide"), icon: BookOpen },
     { href: "/wishlist", label: t("nav.wishlist"), icon: Star },

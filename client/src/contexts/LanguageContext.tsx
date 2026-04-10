@@ -25,7 +25,11 @@ const zh: Record<string, string> = {
   "nav.login": "登入",
   "nav.logout": "登出",
   "nav.profile": "個人檔案",
+  "nav.latest": "最新",
+  "nav.showcase": "作品分享",
   "nav.notifications": "通知",
+  "latest.subtitle": "瀏覽社群最新發佈的文章與分享",
+  "showcase.subtitle": "探索社群成員的創意 AI 作品與分享",
 
   // Sidebar
   "sidebar.title": "AI 工具討論群",
@@ -221,7 +225,11 @@ const en: Record<string, string> = {
   "nav.login": "Login",
   "nav.logout": "Logout",
   "nav.profile": "Profile",
+  "nav.latest": "Latest",
+  "nav.showcase": "Showcase",
   "nav.notifications": "Notifications",
+  "latest.subtitle": "Browse the latest posts and shares from the community",
+  "showcase.subtitle": "Explore creative AI works shared by community members",
 
   // Sidebar
   "sidebar.title": "AI Tool Groups",
