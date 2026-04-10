@@ -105,3 +105,4 @@
 - [x] Bug 修復：/profile/1 頁面仍有 img src="" 空字串錯誤（AvatarCropper 空 imageSrc 修復）
 - [x] 發表文章頁面：AI 自動偵測標題和內容並自動選取相應標籤功能
 - [x] 保留原本手動選取標籤功能
+- [x] Bug 修復：AI 自動偵測標籤在內容為空時觸發 content too_small 驗證錯誤

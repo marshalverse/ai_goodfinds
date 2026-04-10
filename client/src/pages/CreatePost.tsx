@@ -205,10 +205,10 @@ export default function CreatePost() {
       toast.error(language === "zh" ? "請先輸入標題" : "Please enter a title first");
       return;
     }
-    const textContent = content.replace(/<[^>]*>/g, "");
+    const textContent = content.replace(/<[^>]*>/g, "").trim();
     suggestTagsMutation.mutate({
       title: title.trim(),
-      content: textContent || undefined,
+      content: textContent.length > 0 ? textContent : undefined,
     });
   };
 
