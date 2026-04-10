@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   AlignLeft, AlignCenter, AlignRight,
-  List, ListOrdered, Quote, Code, Heading1, Heading2, Heading3,
+  List, ListOrdered, Quote, Code,
   Link as LinkIcon, Image as ImageIcon, Highlighter, Undo, Redo,
-  Palette, Minus, AArrowUp, AArrowDown,
+  Palette, Minus, AArrowUp,
 } from "lucide-react";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -63,7 +63,27 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
+        heading: false,
+        bulletList: {
+          HTMLAttributes: {
+            class: "editor-bullet-list",
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: "editor-ordered-list",
+          },
+        },
+        blockquote: {
+          HTMLAttributes: {
+            class: "editor-blockquote",
+          },
+        },
+        codeBlock: {
+          HTMLAttributes: {
+            class: "editor-code-block",
+          },
+        },
       }),
       Underline,
       TextStyle,
@@ -76,7 +96,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
       TiptapImage.configure({
         HTMLAttributes: { class: "rounded-lg max-w-full mx-auto my-4" },
       }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TextAlign.configure({ types: ["paragraph"] }),
       Highlight.configure({ multicolor: true }),
       Placeholder.configure({ placeholder: placeholder || "開始撰寫您的文章..." }),
     ],
@@ -86,7 +106,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
     },
     editorProps: {
       attributes: {
-        class: "prose prose-invert max-w-none min-h-[300px] focus:outline-none px-4 py-3 text-foreground",
+        class: "prose prose-invert max-w-none focus:outline-none px-4 py-3 text-foreground editor-content-area",
       },
     },
   });
@@ -165,28 +185,15 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
   );
 
   return (
-    <div className="border border-border/60 rounded-lg overflow-hidden bg-card">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-border/40 bg-muted/30">
+    <div className="border border-border/60 rounded-lg overflow-hidden bg-card flex flex-col" style={{ height: "480px" }}>
+      {/* Toolbar - fixed at top */}
+      <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-border/40 bg-muted/30 shrink-0">
         {/* Undo/Redo */}
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} title="復原">
           <Undo className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().redo().run()} title="重做">
           <Redo className="w-4 h-4" />
-        </ToolbarButton>
-
-        <div className="w-px h-6 bg-border/50 mx-1" />
-
-        {/* Headings */}
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive("heading", { level: 1 })} title="標題 1">
-          <Heading1 className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive("heading", { level: 2 })} title="標題 2">
-          <Heading2 className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive("heading", { level: 3 })} title="標題 3">
-          <Heading3 className="w-4 h-4" />
         </ToolbarButton>
 
         <div className="w-px h-6 bg-border/50 mx-1" />
@@ -376,12 +383,14 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
         />
       </div>
 
-      {/* Editor Content */}
-      <EditorContent editor={editor} className="min-h-[300px]" />
+      {/* Editor Content - scrollable area */}
+      <div className="flex-1 overflow-y-auto">
+        <EditorContent editor={editor} className="h-full" />
+      </div>
 
       {/* Upload indicator */}
       {uploadMutation.isPending && (
-        <div className="px-4 py-2 text-sm text-muted-foreground bg-muted/30 border-t border-border/40">
+        <div className="px-4 py-2 text-sm text-muted-foreground bg-muted/30 border-t border-border/40 shrink-0">
           正在上傳圖片...
         </div>
       )}

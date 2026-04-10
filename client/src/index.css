@@ -205,35 +205,179 @@
     font-size: 0.9em;
   }
   .prose-custom pre {
-    background: oklch(0.15 0.015 280);
-    padding: 1em;
+    background: #1e1e1e;
+    padding: 1.2em;
     border-radius: 0.5em;
     overflow-x: auto;
     margin-bottom: 1em;
+    border: 1px solid #333;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    color: #d4d4d4;
+    position: relative;
+  }
+  .prose-custom pre::before {
+    content: '●  ●  ●';
+    display: block;
+    color: #555;
+    font-size: 0.7em;
+    margin-bottom: 0.8em;
+    letter-spacing: 0.3em;
   }
   .prose-custom pre code {
     background: transparent;
     padding: 0;
+    color: #d4d4d4;
+    font-family: inherit;
   }
   .prose-custom blockquote {
-    border-left: 3px solid oklch(0.637 0.237 311);
-    padding-left: 1em;
-    color: oklch(0.75 0.01 280);
+    background: linear-gradient(135deg, #f5e6c8, #ede0c8, #e8d5b0);
+    border: 1px solid #c4a87a;
+    border-left: 4px solid #a0845c;
+    border-radius: 0.5em;
+    padding: 1.2em 1.5em;
+    color: #4a3728;
     font-style: italic;
+    position: relative;
+    box-shadow: 2px 3px 8px rgba(0,0,0,0.15), inset 0 0 30px rgba(160,132,92,0.1);
+    margin: 1em 0;
+  }
+  .prose-custom blockquote::before {
+    content: '\201C';
+    font-size: 3em;
+    color: #a0845c;
+    position: absolute;
+    top: -0.1em;
+    left: 0.2em;
+    opacity: 0.4;
+    font-family: Georgia, serif;
   }
   .prose-custom a {
     color: oklch(0.7 0.2 260);
     text-decoration: underline;
   }
-  .prose-custom ul, .prose-custom ol {
+  .prose-custom ul {
     padding-left: 1.5em;
     margin-bottom: 1em;
+    list-style-type: disc;
+  }
+  .prose-custom ol {
+    padding-left: 1.5em;
+    margin-bottom: 1em;
+    list-style-type: decimal;
   }
   .prose-custom li {
     margin-bottom: 0.3em;
+    display: list-item;
   }
   .prose-custom img {
     border-radius: 0.5em;
     margin: 1em 0;
+  }
+
+  /* === Rich Text Editor Styles === */
+
+  /* Editor content area min height */
+  .editor-content-area {
+    min-height: 300px;
+  }
+
+  /* Bullet list in editor */
+  .tiptap ul.editor-bullet-list,
+  .tiptap ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+  .tiptap ul li {
+    display: list-item;
+    margin-bottom: 0.25em;
+  }
+  .tiptap ul li p {
+    margin: 0;
+  }
+
+  /* Ordered list in editor */
+  .tiptap ol.editor-ordered-list,
+  .tiptap ol {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+  .tiptap ol li {
+    display: list-item;
+    margin-bottom: 0.25em;
+  }
+  .tiptap ol li p {
+    margin: 0;
+  }
+
+  /* Blockquote in editor - ancient scroll / parchment style */
+  .tiptap blockquote.editor-blockquote,
+  .tiptap blockquote {
+    background: linear-gradient(135deg, #f5e6c8, #ede0c8, #e8d5b0);
+    border: 1px solid #c4a87a;
+    border-left: 4px solid #a0845c;
+    border-radius: 0.5em;
+    padding: 1.2em 1.5em;
+    color: #4a3728;
+    font-style: italic;
+    position: relative;
+    box-shadow: 2px 3px 8px rgba(0,0,0,0.15), inset 0 0 30px rgba(160,132,92,0.1);
+    margin: 0.8em 0;
+  }
+  .tiptap blockquote::before {
+    content: '\201C';
+    font-size: 3em;
+    color: #a0845c;
+    position: absolute;
+    top: -0.1em;
+    left: 0.2em;
+    opacity: 0.4;
+    font-family: Georgia, serif;
+  }
+  .tiptap blockquote p {
+    color: #4a3728;
+    margin: 0;
+  }
+
+  /* Code block in editor - IDE / code editor style */
+  .tiptap pre.editor-code-block,
+  .tiptap pre {
+    background: #1e1e1e;
+    padding: 1.2em;
+    border-radius: 0.5em;
+    overflow-x: auto;
+    margin: 0.8em 0;
+    border: 1px solid #333;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    color: #d4d4d4;
+    position: relative;
+  }
+  .tiptap pre::before {
+    content: '●  ●  ●';
+    display: block;
+    color: #555;
+    font-size: 0.7em;
+    margin-bottom: 0.8em;
+    letter-spacing: 0.3em;
+  }
+  .tiptap pre code {
+    background: transparent;
+    padding: 0;
+    color: #d4d4d4;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* Inline code in editor */
+  .tiptap code {
+    background: oklch(0.22 0.02 280);
+    padding: 0.15em 0.4em;
+    border-radius: 0.3em;
+    font-size: 0.9em;
   }
 }

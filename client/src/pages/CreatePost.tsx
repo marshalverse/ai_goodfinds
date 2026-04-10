@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Send, Globe, Sparkles, Loader2, Wand2 } from "lucide-react";
@@ -21,7 +20,6 @@ export default function CreatePost() {
   const searchStr = useSearch();
   const params = new URLSearchParams(searchStr);
   const preselectedTool = params.get("tool");
-  const preselectedType = params.get("postType");
   const editId = params.get("edit");
   const { t, language } = useLanguage();
 
@@ -32,7 +30,6 @@ export default function CreatePost() {
     preselectedTool ? [parseInt(preselectedTool)] : []
   );
   const [isAllSelected, setIsAllSelected] = useState(false);
-  const [postType, setPostType] = useState<string>(preselectedType || "article");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -51,7 +48,6 @@ export default function CreatePost() {
       setTitle(existingPost.title);
       setContent(existingPost.content);
       setSummary(existingPost.summary || "");
-      setPostType(existingPost.postType);
       if (existingPost.tools && existingPost.tools.length > 0) {
         setSelectedToolIds(existingPost.tools.map((t: any) => t.id));
       } else {
@@ -96,6 +92,24 @@ export default function CreatePost() {
     },
     onError: () => toast.error(language === "zh" ? "優化失敗，請重試" : "Optimization failed"),
   });
+
+  const toolsByCategory = useMemo(() => {
+    const grouped = (tools || []).reduce<Record<string, typeof tools>>((acc, tool) => {
+      const cat = tool.category;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat]!.push(tool);
+      return acc;
+    }, {});
+    const categoryOrder = ['llm', 'image', 'audio', 'video', 'code', 'other'];
+    const sorted: Record<string, typeof tools> = {};
+    for (const cat of categoryOrder) {
+      if (grouped[cat]) sorted[cat] = grouped[cat];
+    }
+    for (const cat of Object.keys(grouped)) {
+      if (!sorted[cat]) sorted[cat] = grouped[cat];
+    }
+    return sorted;
+  }, [tools]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -142,7 +156,7 @@ export default function CreatePost() {
         summary: summary.trim() || undefined,
         toolId: selectedToolIds[0],
         toolIds: selectedToolIds,
-        postType: postType as any,
+        postType: "article" as any,
         tagIds: selectedTags.length > 0 ? selectedTags : undefined,
       });
     } else {
@@ -152,7 +166,7 @@ export default function CreatePost() {
         summary: summary.trim() || undefined,
         toolId: selectedToolIds[0],
         toolIds: selectedToolIds,
-        postType: postType as any,
+        postType: "article" as any,
         tagIds: selectedTags.length > 0 ? selectedTags : undefined,
       });
     }
@@ -176,26 +190,6 @@ export default function CreatePost() {
     const toolName = tools?.find(t => selectedToolIds.includes(t.id))?.name;
     optimizeMutation.mutate({ prompt: textContent, toolName });
   };
-
-  const toolsByCategory = useMemo(() => {
-    const grouped = (tools || []).reduce<Record<string, typeof tools>>((acc, tool) => {
-      const cat = tool.category;
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat]!.push(tool);
-      return acc;
-    }, {});
-    // Sort: llm first, other last, rest alphabetically
-    const categoryOrder = ['llm', 'image', 'audio', 'video', 'code', 'other'];
-    const sorted: Record<string, typeof tools> = {};
-    for (const cat of categoryOrder) {
-      if (grouped[cat]) sorted[cat] = grouped[cat];
-    }
-    // Add any remaining categories not in the predefined order
-    for (const cat of Object.keys(grouped)) {
-      if (!sorted[cat]) sorted[cat] = grouped[cat];
-    }
-    return sorted;
-  }, [tools]);
 
   const categoryLabels: Record<string, string> = language === "zh" ? {
     llm: "大型語言模型", image: "圖像生成", audio: "音訊生成",
@@ -273,23 +267,21 @@ export default function CreatePost() {
                   ({language === "zh" ? "支援富文本格式" : "Rich text supported"})
                 </span>
               </Label>
-              {postType === "prompt" && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-xs text-primary hover:text-primary/80"
-                  onClick={handleOptimizePrompt}
-                  disabled={optimizeMutation.isPending}
-                >
-                  {optimizeMutation.isPending ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-3 h-3" />
-                  )}
-                  {language === "zh" ? "AI 優化提示詞" : "AI Optimize Prompt"}
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs text-primary hover:text-primary/80"
+                onClick={handleOptimizePrompt}
+                disabled={optimizeMutation.isPending}
+              >
+                {optimizeMutation.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Wand2 className="w-3 h-3" />
+                )}
+                {language === "zh" ? "AI 優化提示詞" : "AI Optimize Prompt"}
+              </Button>
             </div>
             <RichTextEditor
               content={content}
@@ -297,6 +289,25 @@ export default function CreatePost() {
               placeholder={language === "zh" ? "開始撰寫您的文章..." : "Start writing your article..."}
             />
           </div>
+
+          {/* Publish button - below content area */}
+          <Button
+            className="w-full gap-2 bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0 shadow-lg shadow-primary/20"
+            size="lg"
+            disabled={isPending}
+            onClick={handleSubmit}
+          >
+            {isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            {isPending
+              ? (language === "zh" ? "處理中..." : "Processing...")
+              : isEditMode
+                ? t("create.update")
+                : t("create.publish")}
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -357,25 +368,6 @@ export default function CreatePost() {
 
           <Card className="bg-card border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">{t("create.postType")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={postType} onValueChange={setPostType}>
-                <SelectTrigger className="bg-secondary border-border/50"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="article">{t("create.type.article")}</SelectItem>
-                  <SelectItem value="prompt">{t("create.type.prompt")}</SelectItem>
-                  <SelectItem value="tutorial">{t("create.type.tutorial")}</SelectItem>
-                  <SelectItem value="question">{t("create.type.question")}</SelectItem>
-                  <SelectItem value="comparison">{t("create.type.comparison")}</SelectItem>
-                  <SelectItem value="other">{t("create.type.other")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border/50">
-            <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">{t("create.tags")}</CardTitle>
             </CardHeader>
             <CardContent>
@@ -402,23 +394,6 @@ export default function CreatePost() {
             </CardContent>
           </Card>
 
-          <Button
-            className="w-full gap-2 bg-gradient-to-r from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] hover:opacity-90 text-white border-0 shadow-lg shadow-primary/20"
-            size="lg"
-            disabled={isPending}
-            onClick={handleSubmit}
-          >
-            {isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-            {isPending
-              ? (language === "zh" ? "處理中..." : "Processing...")
-              : isEditMode
-                ? t("create.update")
-                : t("create.publish")}
-          </Button>
         </div>
       </div>
     </div>
