@@ -7,16 +7,26 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import PostCard from "@/components/PostCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMemo } from "react";
 
 export default function ComparePage() {
   const { isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { data: tools } = trpc.tools.list.useQuery();
+  const { data: tags } = trpc.tags.list.useQuery();
+
+  // Find the "工具比較" tag ID
+  const compareTagId = useMemo(() => {
+    if (!tags) return undefined;
+    const tag = tags.find(t => t.name === "工具比較" || t.name?.toLowerCase() === "tool comparison" || t.name?.toLowerCase() === "compare");
+    return tag?.id;
+  }, [tags]);
+
   const { data: postsData, isLoading } = trpc.posts.list.useQuery({
-    postType: "comparison",
+    tagId: compareTagId,
     sortBy: "popular",
     limit: 20,
-  });
+  }, { enabled: !!compareTagId });
 
   const toolPairs = (tools || []).slice(0, 6).flatMap((a, i) =>
     (tools || []).slice(i + 1, i + 3).map(b => ({ a, b }))

@@ -110,9 +110,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] flex items-center justify-center text-white text-sm font-medium">
-                        {user?.name?.[0]?.toUpperCase() || "U"}
-                      </div>
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user.name || "Avatar"} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] flex items-center justify-center text-white text-sm font-medium">
+                          {user?.name?.[0]?.toUpperCase() || "U"}
+                        </div>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">

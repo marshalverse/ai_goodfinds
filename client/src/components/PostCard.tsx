@@ -113,9 +113,13 @@ export default function PostCard({ post }: PostCardProps) {
 
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
-                {post.author?.name?.[0]?.toUpperCase() || "U"}
-              </div>
+              {post.author?.avatarUrl ? (
+                <img src={post.author.avatarUrl} alt={post.author.name || "Avatar"} className="w-6 h-6 rounded-full object-cover" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
+                  {post.author?.name?.[0]?.toUpperCase() || "U"}
+                </div>
+              )}
               <span className="text-xs text-muted-foreground">{post.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
               <span className="text-xs text-muted-foreground/50">·</span>
               <span className="text-xs text-muted-foreground/70">

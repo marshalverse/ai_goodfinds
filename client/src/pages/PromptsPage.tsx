@@ -163,9 +163,13 @@ function PromptCard({ post, language }: { post: any; language: string }) {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-500/60 to-orange-500/30 flex items-center justify-center text-[10px] text-white font-medium">
-                {post.author?.name?.[0]?.toUpperCase() || "U"}
-              </div>
+              {post.author?.avatarUrl ? (
+                <img src={post.author.avatarUrl} alt={post.author.name || "Avatar"} className="w-5 h-5 rounded-full object-cover" />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-500/60 to-orange-500/30 flex items-center justify-center text-[10px] text-white font-medium">
+                  {post.author?.name?.[0]?.toUpperCase() || "U"}
+                </div>
+              )}
               <span className="text-xs text-muted-foreground">{post.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
               <span className="text-xs text-muted-foreground/50">·</span>
               <span className="text-xs text-muted-foreground/70">

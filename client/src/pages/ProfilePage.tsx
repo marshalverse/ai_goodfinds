@@ -12,6 +12,7 @@ import PostCard from "@/components/PostCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState, useRef, useCallback } from "react";
+import AvatarCropper from "@/components/AvatarCropper";
 
 export default function ProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -39,39 +40,11 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const isOwnProfile = currentUser?.id === userId;
+  // Cropper states
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState("");
 
-  const handleAvatarUpload = useCallback(async (file: File) => {
-    if (!file) return;
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      alert(language === "zh" ? "圖片大小不能超過 5MB" : "Image size must be under 5MB");
-      return;
-    }
-    setUploadingAvatar(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(",")[1];
-        const result = await uploadImage.mutateAsync({
-          base64,
-          mimeType: file.type,
-          fileName: file.name,
-        });
-        await updateProfile.mutateAsync({ avatarUrl: result.url });
-        setUploadingAvatar(false);
-      };
-      reader.onerror = () => {
-        setUploadingAvatar(false);
-        alert(language === "zh" ? "圖片讀取失敗" : "Failed to read image");
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Avatar upload failed:", error);
-      setUploadingAvatar(false);
-      alert(language === "zh" ? "上傳失敗，請重試" : "Upload failed, please try again");
-    }
-  }, [uploadImage, updateProfile, language]);
+  const isOwnProfile = currentUser?.id === userId;
 
   const handleAvatarClick = () => {
     avatarInputRef.current?.click();
@@ -79,9 +52,58 @@ export default function ProfilePage() {
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleAvatarUpload(file);
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert(language === "zh" ? "圖片大小不能超過 5MB" : "Image size must be under 5MB");
+      e.target.value = "";
+      return;
+    }
+
+    // Read file and open cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropperOpen(true);
+    };
+    reader.onerror = () => {
+      alert(language === "zh" ? "圖片讀取失敗" : "Failed to read image");
+    };
+    reader.readAsDataURL(file);
     e.target.value = "";
   };
+
+  const handleCropComplete = useCallback(async (croppedBlob: Blob) => {
+    setUploadingAvatar(true);
+    try {
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = (reader.result as string).split(",")[1];
+          const result = await uploadImage.mutateAsync({
+            base64,
+            mimeType: "image/jpeg",
+            fileName: "avatar.jpg",
+          });
+          await updateProfile.mutateAsync({ avatarUrl: result.url });
+          setCropperOpen(false);
+          setCropImageSrc("");
+        } catch (error) {
+          console.error("Avatar upload failed:", error);
+          alert(language === "zh" ? "上傳失敗，請重試" : "Upload failed, please try again");
+        } finally {
+          setUploadingAvatar(false);
+        }
+      };
+      reader.readAsDataURL(croppedBlob);
+    } catch (error) {
+      console.error("Avatar upload failed:", error);
+      setUploadingAvatar(false);
+      alert(language === "zh" ? "上傳失敗，請重試" : "Upload failed, please try again");
+    }
+  }, [uploadImage, updateProfile, language]);
 
   const startEditName = () => {
     setNameValue(profile?.name || "");
@@ -330,6 +352,18 @@ export default function ProfilePage() {
           <p className="text-center text-muted-foreground py-8">{t("search.noResults")}</p>
         )}
       </div>
+
+      {/* Avatar Cropper Dialog */}
+      <AvatarCropper
+        open={cropperOpen}
+        onClose={() => {
+          setCropperOpen(false);
+          setCropImageSrc("");
+        }}
+        imageSrc={cropImageSrc}
+        onCropComplete={handleCropComplete}
+        isSaving={uploadingAvatar}
+      />
     </div>
   );
 }
