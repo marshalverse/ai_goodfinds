@@ -89,6 +89,51 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Recent Posts */}
+      {recentData?.posts && recentData.posts.length > 0 && (
+        <section className="container py-16">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">{t("home.recent")}</h2>
+            </div>
+            <Link href="/latest">
+              <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+                {t("home.viewAll")} <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recentData.posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Trending Posts */}
+      {trendingPosts && trendingPosts.length > 0 && (
+        <section className="container py-16">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-primary" />
+                {t("home.trending")}
+              </h2>
+            </div>
+            <Link href="/trending">
+              <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+                {t("home.viewAll")} <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trendingPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* AI Tools Categories */}
       <section className="container py-16">
         <div className="flex items-center justify-between mb-8">
@@ -128,46 +173,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      {/* Trending Posts */}
-      {trendingPosts && trendingPosts.length > 0 && (
-        <section className="container py-16">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-primary" />
-                {t("home.trending")}
-              </h2>
-            </div>
-            <Link href="/trending">
-              <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
-                {t("home.viewAll")} <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {trendingPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Recent Posts */}
-      {recentData?.posts && recentData.posts.length > 0 && (
-        <section className="container py-16">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">{t("home.recent")}</h2>
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentData.posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Empty State */}
       {(!trendingPosts || trendingPosts.length === 0) && (!recentData?.posts || recentData.posts.length === 0) && (

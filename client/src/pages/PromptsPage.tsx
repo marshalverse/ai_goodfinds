@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PenSquare, Search, Wand2, Copy, Heart, MessageCircle } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { toast } from "sonner";
@@ -22,13 +22,22 @@ export default function PromptsPage() {
   const { t, language } = useLanguage();
 
   const { data: tools } = trpc.tools.list.useQuery();
+  const { data: tags } = trpc.tags.list.useQuery();
+
+  // Find the "提示詞分享" tag ID
+  const promptTagId = useMemo(() => {
+    if (!tags) return undefined;
+    const tag = tags.find(t => t.name === "提示詞分享" || t.name?.toLowerCase() === "prompt sharing" || t.name?.toLowerCase() === "prompts");
+    return tag?.id;
+  }, [tags]);
+
   const { data: postsData, isLoading } = trpc.posts.list.useQuery({
-    postType: "prompt",
+    tagId: promptTagId,
     toolId: toolFilter !== "all" ? parseInt(toolFilter) : undefined,
     sortBy,
     search: searchQuery || undefined,
     limit: 50,
-  });
+  }, { enabled: !!promptTagId });
 
   return (
     <div className="container py-8">
