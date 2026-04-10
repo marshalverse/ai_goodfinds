@@ -178,12 +178,23 @@ export default function CreatePost() {
   };
 
   const toolsByCategory = useMemo(() => {
-    return (tools || []).reduce<Record<string, typeof tools>>((acc, tool) => {
+    const grouped = (tools || []).reduce<Record<string, typeof tools>>((acc, tool) => {
       const cat = tool.category;
       if (!acc[cat]) acc[cat] = [];
       acc[cat]!.push(tool);
       return acc;
     }, {});
+    // Sort: llm first, other last, rest alphabetically
+    const categoryOrder = ['llm', 'image', 'audio', 'video', 'code', 'other'];
+    const sorted: Record<string, typeof tools> = {};
+    for (const cat of categoryOrder) {
+      if (grouped[cat]) sorted[cat] = grouped[cat];
+    }
+    // Add any remaining categories not in the predefined order
+    for (const cat of Object.keys(grouped)) {
+      if (!sorted[cat]) sorted[cat] = grouped[cat];
+    }
+    return sorted;
   }, [tools]);
 
   const categoryLabels: Record<string, string> = language === "zh" ? {
@@ -369,7 +380,13 @@ export default function CreatePost() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {(tags || []).map((tag) => (
+                {[...(tags || [])].sort((a, b) => {
+                  const aIsOther = a.name === '其他' || a.name?.toLowerCase() === 'other';
+                  const bIsOther = b.name === '其他' || b.name?.toLowerCase() === 'other';
+                  if (aIsOther && !bIsOther) return 1;
+                  if (!aIsOther && bIsOther) return -1;
+                  return 0;
+                }).map((tag) => (
                   <Badge
                     key={tag.id}
                     variant={selectedTags.includes(tag.id) ? "default" : "outline"}
