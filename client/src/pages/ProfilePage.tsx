@@ -149,7 +149,7 @@ export default function ProfilePage() {
       <div className="flex items-start gap-6 mb-8">
         {/* Avatar with upload */}
         <div className="relative group shrink-0">
-          {profile.avatarUrl ? (
+          {profile.avatarUrl && profile.avatarUrl.length > 0 ? (
             <img
               src={profile.avatarUrl}
               alt={profile.name || "Avatar"}

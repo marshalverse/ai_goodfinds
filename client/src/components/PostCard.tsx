@@ -113,7 +113,7 @@ export default function PostCard({ post }: PostCardProps) {
 
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div className="flex items-center gap-2">
-              {post.author?.avatarUrl ? (
+              {post.author?.avatarUrl && post.author.avatarUrl.length > 0 ? (
                 <img src={post.author.avatarUrl} alt={post.author.name || "Avatar"} className="w-6 h-6 rounded-full object-cover" />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">

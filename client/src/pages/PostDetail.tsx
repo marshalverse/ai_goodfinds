@@ -111,7 +111,7 @@ export default function PostDetail() {
 
         <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
           <Link href={`/profile/${post.author?.id}`} className="flex items-center gap-2 hover:text-foreground transition-colors">
-            {post.author?.avatarUrl ? (
+            {post.author?.avatarUrl && post.author.avatarUrl.length > 0 ? (
               <img src={post.author.avatarUrl} alt={post.author.name || "Avatar"} className="w-8 h-8 rounded-full object-cover" />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
@@ -215,7 +215,7 @@ export default function PostDetail() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Link href={`/profile/${comment.author?.id}`}>
-                      {comment.author?.avatarUrl ? (
+                      {comment.author?.avatarUrl && comment.author.avatarUrl.length > 0 ? (
                         <img src={comment.author.avatarUrl} alt={comment.author.name || "Avatar"} className="w-7 h-7 rounded-full object-cover" />
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
