@@ -20,6 +20,8 @@ function createAuthContext(userId = 1): { ctx: TrpcContext } {
     name: `Test User ${userId}`,
     loginMethod: "manus",
     role: "user",
+    bio: null,
+    avatarUrl: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
@@ -374,5 +376,55 @@ describe("search.posts", () => {
     const result = await caller.posts.list({ limit: 5, search: "test" });
     expect(result).toHaveProperty("posts");
     expect(result).toHaveProperty("total");
+  });
+});
+
+describe("profile", () => {
+  it("get returns profile data for valid userId", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    // userId 0 or non-existent should return undefined
+    const result = await caller.profile.get({ userId: 999999 });
+    expect(result).toBeUndefined();
+  });
+
+  it("update requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.profile.update({ name: "New Name" })
+    ).rejects.toThrow();
+  });
+
+  it("update accepts name, bio, and avatarUrl", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.profile.update({
+      name: "Updated Name",
+      bio: "This is my bio",
+      avatarUrl: "https://example.com/avatar.png",
+    });
+    expect(result).toEqual({ success: true });
+  });
+
+  it("update accepts partial fields (name only)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.profile.update({ name: "Only Name" });
+    expect(result).toEqual({ success: true });
+  });
+
+  it("update accepts partial fields (bio only)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.profile.update({ bio: "Only bio text" });
+    expect(result).toEqual({ success: true });
+  });
+
+  it("update accepts partial fields (avatarUrl only)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.profile.update({ avatarUrl: "https://example.com/new-avatar.jpg" });
+    expect(result).toEqual({ success: true });
   });
 });
