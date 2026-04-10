@@ -88,7 +88,6 @@ export default function SearchPage() {
           <SelectContent>
             <SelectItem value="latest">{t("search.sort.latest")}</SelectItem>
             <SelectItem value="popular">{t("search.sort.popular")}</SelectItem>
-            <SelectItem value="views">{t("search.sort.mostLiked")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
