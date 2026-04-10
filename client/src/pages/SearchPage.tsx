@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PostCard from "@/components/PostCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -19,6 +19,17 @@ export default function SearchPage() {
 
   const { data: tools } = trpc.tools.list.useQuery();
   const { data: tags } = trpc.tags.list.useQuery();
+
+  const sortedTags = useMemo(() => {
+    if (!tags) return [];
+    return [...tags].sort((a, b) => {
+      const aIsOther = a.name === '其他' || a.name?.toLowerCase() === 'other';
+      const bIsOther = b.name === '其他' || b.name?.toLowerCase() === 'other';
+      if (aIsOther && !bIsOther) return 1;
+      if (!aIsOther && bIsOther) return -1;
+      return 0;
+    });
+  }, [tags]);
 
   const { data: results, isLoading } = trpc.posts.list.useQuery({
     search: query || undefined,
@@ -100,7 +111,7 @@ export default function SearchPage() {
         >
           {t("search.filter.all")}
         </Badge>
-        {(tags || []).map((tag) => (
+        {sortedTags.map((tag) => (
           <Badge
             key={tag.id}
             variant={tagFilter === tag.id ? "default" : "outline"}
