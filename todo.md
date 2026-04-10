@@ -102,3 +102,4 @@
 - [x] 個人檔案：大頭貼上傳新增 1:1 正方形裁切功能
 - [x] 全站各處（導航列、文章卡片、留言區等）同步顯示用戶上傳的頭像
 - [x] Bug 修復：全站 avatarUrl 空字串導致 img src="" 錯誤
+- [x] Bug 修復：/profile/1 頁面仍有 img src="" 空字串錯誤（AvatarCropper 空 imageSrc 修復）

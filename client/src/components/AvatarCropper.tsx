@@ -90,6 +90,9 @@ export default function AvatarCropper({ open, onClose, imageSrc, onCropComplete,
     }
   };
 
+  // Don't render dialog at all if no image source
+  if (!open || !imageSrc) return null;
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && !isSaving && onClose()}>
       <DialogContent className="sm:max-w-lg">
