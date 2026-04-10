@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Send, Globe, Sparkles, Loader2, Wand2 } from "lucide-react";
+import { ArrowLeft, Send, Globe, Sparkles, Loader2, Wand2, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
@@ -100,13 +101,15 @@ export default function CreatePost() {
     onError: () => toast.error(language === "zh" ? "標籤推薦失敗，請重試" : "Tag suggestion failed"),
   });
 
-  const optimizeMutation = trpc.ai.optimizePrompt.useMutation({
+  const [suggestionResult, setSuggestionResult] = useState("");
+  const [showSuggestion, setShowSuggestion] = useState(false);
+
+  const contentSuggestionMutation = trpc.ai.contentSuggestion.useMutation({
     onSuccess: (data) => {
-      const text = typeof data.result === "string" ? data.result : "";
-      setContent(text);
-      toast.success(language === "zh" ? "提示詞已優化！" : "Prompt optimized!");
+      setSuggestionResult(data.suggestion);
+      setShowSuggestion(true);
     },
-    onError: () => toast.error(language === "zh" ? "優化失敗，請重試" : "Optimization failed"),
+    onError: () => toast.error(language === "zh" ? "建議生成失敗，請重試" : "Suggestion failed"),
   });
 
   const toolsByCategory = useMemo(() => {
@@ -212,11 +215,16 @@ export default function CreatePost() {
     });
   };
 
-  const handleOptimizePrompt = () => {
-    if (!content.trim()) { toast.error(language === "zh" ? "請先輸入提示詞內容" : "Please enter prompt content first"); return; }
-    const textContent = content.replace(/<[^>]*>/g, "");
-    const toolName = tools?.find(t => selectedToolIds.includes(t.id))?.name;
-    optimizeMutation.mutate({ prompt: textContent, toolName });
+  const handleContentSuggestion = () => {
+    if (!title.trim()) {
+      toast.error(language === "zh" ? "請先輸入標題" : "Please enter a title first");
+      return;
+    }
+    const textContent = content.replace(/<[^>]*>/g, "").trim();
+    contentSuggestionMutation.mutate({
+      title: title.trim(),
+      content: textContent.length > 0 ? textContent : undefined,
+    });
   };
 
   const categoryLabels: Record<string, string> = language === "zh" ? {
@@ -279,13 +287,7 @@ export default function CreatePost() {
                 {language === "zh" ? "AI 自動生成摘要" : "AI Generate Summary"}
               </Button>
             </div>
-            <Input
-              id="summary"
-              placeholder={language === "zh" ? "簡短描述文章內容..." : "Brief description..."}
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              className="bg-secondary border-border/50"
-            />
+            <SummaryField summary={summary} setSummary={setSummary} language={language} />
           </div>
 
           <div>
@@ -300,15 +302,15 @@ export default function CreatePost() {
                 variant="ghost"
                 size="sm"
                 className="gap-1.5 text-xs text-primary hover:text-primary/80"
-                onClick={handleOptimizePrompt}
-                disabled={optimizeMutation.isPending}
+                onClick={handleContentSuggestion}
+                disabled={contentSuggestionMutation.isPending}
               >
-                {optimizeMutation.isPending ? (
+                {contentSuggestionMutation.isPending ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <Wand2 className="w-3 h-3" />
                 )}
-                {language === "zh" ? "AI 優化提示詞" : "AI Optimize Prompt"}
+                {language === "zh" ? "AI 內容建議" : "AI Suggestions"}
               </Button>
             </div>
             <RichTextEditor
@@ -440,6 +442,78 @@ export default function CreatePost() {
           </Card>
 
         </div>
+      </div>
+      {/* AI Content Suggestion Panel */}
+      {showSuggestion && suggestionResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowSuggestion(false)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Wand2 className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-foreground">{language === "zh" ? "AI 內容建議" : "AI Content Suggestions"}</h3>
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowSuggestion(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="p-4 overflow-y-auto prose-custom text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+              {suggestionResult}
+            </div>
+            <div className="p-3 border-t border-border flex justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowSuggestion(false)}>
+                {language === "zh" ? "關閉" : "Close"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryField({ summary, setSummary, language }: { summary: string; setSummary: (v: string) => void; language: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!expanded) {
+    return (
+      <div
+        className="flex items-center gap-2 cursor-pointer group"
+        onClick={() => setExpanded(true)}
+      >
+        <div className="flex-1 bg-secondary border border-border/50 rounded-md px-3 py-2 text-sm min-h-[38px] flex items-center">
+          {summary ? (
+            <span className="text-foreground truncate">{summary}</span>
+          ) : (
+            <span className="text-muted-foreground">{language === "zh" ? "點擊展開編輯摘要..." : "Click to expand and edit summary..."}</span>
+          )}
+        </div>
+        <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Textarea
+        id="summary"
+        placeholder={language === "zh" ? "簡短描述文章內容..." : "Brief description..."}
+        value={summary}
+        onChange={(e) => setSummary(e.target.value)}
+        className="bg-secondary border-border/50 min-h-[100px] resize-y"
+        autoFocus
+      />
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{summary.length} {language === "zh" ? "字" : "chars"}</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2"
+          onClick={() => setExpanded(false)}
+        >
+          <ChevronUp className="w-3 h-3" />
+          {language === "zh" ? "收合" : "Collapse"}
+        </Button>
       </div>
     </div>
   );

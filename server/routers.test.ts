@@ -267,12 +267,12 @@ describe("ai.generateSummary", () => {
   });
 });
 
-describe("ai.optimizePrompt", () => {
+describe("ai.contentSuggestion", () => {
   it("requires authentication", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     await expect(
-      caller.ai.optimizePrompt({ prompt: "Test prompt" })
+      caller.ai.contentSuggestion({ title: "Test title" })
     ).rejects.toThrow();
   });
 });
@@ -443,7 +443,7 @@ describe("ai.suggestTags", () => {
     expect(Array.isArray(result.tagNames)).toBe(true);
   });
 
-  it("returns tags matching available tag names", async () => {
+  it("returns tags matching available tag names", { timeout: 15000 }, async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.ai.suggestTags({

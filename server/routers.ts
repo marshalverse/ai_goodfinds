@@ -226,26 +226,25 @@ export const appRouter = router({
 
   // ===== AI Assistant =====
   ai: router({
-    optimizePrompt: protectedProcedure.input(z.object({
-      prompt: z.string().min(1),
-      toolName: z.string().optional(),
+    contentSuggestion: protectedProcedure.input(z.object({
+      title: z.string().min(1),
+      content: z.string().optional(),
     })).mutation(async ({ input }) => {
+      const textContent = input.content ? input.content.replace(/<[^>]*>/g, '').trim() : '';
       const response = await invokeLLM({
         messages: [
           {
             role: "system",
-            content: `你是一位專業的 AI 提示詞優化專家。請幫助使用者優化他們的提示詞，使其更加清晰、具體、有效。${input.toolName ? `目標 AI 工具是 ${input.toolName}。` : ""}
-回覆格式：
-1. 先簡短說明優化了哪些方面
-2. 然後給出優化後的完整提示詞（用 --- 分隔）`,
+            content: `你是一位專業的文章寫作顧問。請根據使用者的文章標題和內容，提供具體的改進建議和寫作提示。\n\n回覆格式（使用繁體中文）：\n1. **內容完整性**：文章是否涵蓋了主題的關鍵面向，有哪些可以補充的\n2. **結構建議**：文章結構是否清晰，段落安排是否合理\n3. **吸引力提升**：如何讓文章更吸引讀者\n4. **具體寫作提示**：給出 2-3 個具體的寫作方向或可以加入的內容\n\n請保持建議簡潔實用，每點不超過 2-3 句話。`,
           },
           {
             role: "user",
-            content: `請優化以下提示詞：\n\n${input.prompt}`,
+            content: `文章標題：${input.title}${textContent ? `\n\n文章內容：\n${textContent.slice(0, 2000)}` : '\n\n（尚未撰寫內容）'}`,
           },
         ],
       });
-      return { result: response.choices[0]?.message?.content || "" };
+      const rawContent = response.choices[0]?.message?.content;
+      return { suggestion: typeof rawContent === 'string' ? rawContent : '' };
     }),
 
     generateSummary: protectedProcedure.input(z.object({
