@@ -266,6 +266,61 @@ export const appRouter = router({
       });
       return { summary: response.choices[0]?.message?.content || "" };
     }),
+
+    suggestTags: protectedProcedure.input(z.object({
+      title: z.string().min(1),
+      content: z.string().optional(),
+    })).mutation(async ({ input }) => {
+      const allTags = await db.getAllTags();
+      const tagNames = allTags.map(t => t.name).join(', ');
+
+      const textContent = input.content ? input.content.replace(/<[^>]*>/g, '').slice(0, 2000) : '';
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `你是一個文章標籤分類專家。根據文章的標題和內容，從以下可用標籤中選擇最適合的標籤（可多選）。\n\n可用標籤：${tagNames}\n\n請只回覆 JSON 格式，不要包含其他文字。格式為：{"tags": ["標籤1", "標籤2"]}\n\n規則：\n1. 只能選擇上述可用標籤中的標籤\n2. 選擇 1-3 個最相關的標籤\n3. 如果內容不明確屬於任何特定標籤，選擇「其他」`,
+          },
+          {
+            role: "user",
+            content: `標題：${input.title}${textContent ? `\n\n內容摘要：${textContent.slice(0, 1000)}` : ''}`,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "tag_suggestion",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                tags: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Suggested tag names from the available list",
+                },
+              },
+              required: ["tags"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      try {
+        const rawContent = response.choices[0]?.message?.content;
+        const contentStr = typeof rawContent === 'string' ? rawContent : '{"tags":[]}';
+        const parsed = JSON.parse(contentStr);
+        const suggestedNames: string[] = parsed.tags || [];
+        const suggestedIds = allTags
+          .filter(t => suggestedNames.includes(t.name))
+          .map(t => t.id);
+        return { tagIds: suggestedIds, tagNames: suggestedNames };
+      } catch {
+        return { tagIds: [], tagNames: [] };
+      }
+    }),
   }),
 
   // ===== Wishlist (許願池) =====

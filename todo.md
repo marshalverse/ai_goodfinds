@@ -103,3 +103,5 @@
 - [x] 全站各處（導航列、文章卡片、留言區等）同步顯示用戶上傳的頭像
 - [x] Bug 修復：全站 avatarUrl 空字串導致 img src="" 錯誤
 - [x] Bug 修復：/profile/1 頁面仍有 img src="" 空字串錯誤（AvatarCropper 空 imageSrc 修復）
+- [x] 發表文章頁面：AI 自動偵測標題和內容並自動選取相應標籤功能
+- [x] 保留原本手動選取標籤功能

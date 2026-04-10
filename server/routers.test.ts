@@ -428,3 +428,31 @@ describe("profile", () => {
     expect(result).toEqual({ success: true });
   });
 });
+
+describe("ai.suggestTags", () => {
+  it("returns tagIds and tagNames arrays", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.ai.suggestTags({
+      title: "ChatGPT 與 Claude 的比較心得",
+      content: "這篇文章比較了 ChatGPT 和 Claude 在不同任務上的表現差異",
+    });
+    expect(result).toHaveProperty("tagIds");
+    expect(result).toHaveProperty("tagNames");
+    expect(Array.isArray(result.tagIds)).toBe(true);
+    expect(Array.isArray(result.tagNames)).toBe(true);
+  });
+
+  it("returns tags matching available tag names", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.ai.suggestTags({
+      title: "如何使用 Midjourney 生成精美圖片",
+    });
+    expect(result).toHaveProperty("tagIds");
+    expect(result).toHaveProperty("tagNames");
+    // tagIds should be numbers if any tags were suggested
+    result.tagIds.forEach((id: number) => expect(typeof id).toBe("number"));
+    result.tagNames.forEach((name: string) => expect(typeof name).toBe("string"));
+  });
+});

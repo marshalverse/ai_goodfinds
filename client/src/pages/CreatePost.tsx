@@ -84,6 +84,22 @@ export default function CreatePost() {
     onError: () => toast.error(language === "zh" ? "摘要生成失敗，請重試" : "Summary generation failed"),
   });
 
+  const suggestTagsMutation = trpc.ai.suggestTags.useMutation({
+    onSuccess: (data) => {
+      if (data.tagIds.length > 0) {
+        setSelectedTags(data.tagIds);
+        toast.success(
+          language === "zh"
+            ? `AI 已自動選取 ${data.tagNames.join("、")} 標籤`
+            : `AI selected tags: ${data.tagNames.join(", ")}`
+        );
+      } else {
+        toast.info(language === "zh" ? "AI 無法判斷適合的標籤，請手動選取" : "AI couldn't determine tags, please select manually");
+      }
+    },
+    onError: () => toast.error(language === "zh" ? "標籤推薦失敗，請重試" : "Tag suggestion failed"),
+  });
+
   const optimizeMutation = trpc.ai.optimizePrompt.useMutation({
     onSuccess: (data) => {
       const text = typeof data.result === "string" ? data.result : "";
@@ -182,6 +198,18 @@ export default function CreatePost() {
     if (!content.trim()) { toast.error(language === "zh" ? "請先撰寫文章內容" : "Please write content first"); return; }
     const textContent = content.replace(/<[^>]*>/g, "");
     summarizeMutation.mutate({ content: textContent, title: title.trim() || undefined });
+  };
+
+  const handleSuggestTags = () => {
+    if (!title.trim()) {
+      toast.error(language === "zh" ? "請先輸入標題" : "Please enter a title first");
+      return;
+    }
+    const textContent = content.replace(/<[^>]*>/g, "");
+    suggestTagsMutation.mutate({
+      title: title.trim(),
+      content: textContent || undefined,
+    });
   };
 
   const handleOptimizePrompt = () => {
@@ -368,7 +396,24 @@ export default function CreatePost() {
 
           <Card className="bg-card border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">{t("create.tags")}</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">{t("create.tags")}</CardTitle>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-xs text-primary hover:text-primary/80 h-7 px-2"
+                  onClick={handleSuggestTags}
+                  disabled={suggestTagsMutation.isPending}
+                >
+                  {suggestTagsMutation.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  {language === "zh" ? "AI 自動偵測" : "AI Detect"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
