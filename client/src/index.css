@@ -274,6 +274,21 @@
   .prose-custom img {
     border-radius: 0.5em;
     margin: 1em 0;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Image resize in editor */
+  .tiptap .image-resizer {
+    display: inline-block;
+    position: relative;
+    margin: 1em 0;
+  }
+  .tiptap .image-resizer img {
+    border-radius: 0.5em;
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 
   /* === Rich Text Editor Styles === */
@@ -379,5 +394,10 @@
     padding: 0.15em 0.4em;
     border-radius: 0.3em;
     font-size: 0.9em;
+  }
+
+  /* Image resize node view styles */
+  .tiptap [style*="cursor: pointer"] img {
+    border-radius: 0.5em;
   }
 }

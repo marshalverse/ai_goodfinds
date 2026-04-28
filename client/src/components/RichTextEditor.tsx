@@ -4,7 +4,7 @@ import Underline from "@tiptap/extension-underline";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import TiptapLink from "@tiptap/extension-link";
-import TiptapImage from "@tiptap/extension-image";
+import ImageResize from "tiptap-extension-resize-image";
 import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -100,9 +100,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
         openOnClick: false,
         HTMLAttributes: { class: "text-primary underline cursor-pointer" },
       }),
-      TiptapImage.configure({
-        HTMLAttributes: { class: "rounded-lg max-w-full mx-auto my-4" },
-      }),
+      ImageResize,
       TextAlign.configure({ types: ["paragraph"] }),
       Highlight.configure({ multicolor: true }),
       Placeholder.configure({ placeholder: placeholder || "開始撰寫您的文章..." }),
@@ -141,7 +139,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
           mimeType: file.type,
           fileName: file.name,
         });
-        editor.chain().focus().setImage({ src: result.url }).run();
+        editor.chain().focus().insertContent({ type: 'imageResize', attrs: { src: result.url } }).run();
       };
       reader.readAsDataURL(file);
     } catch (error) {
