@@ -12,14 +12,14 @@ function createPublicContext(): TrpcContext {
   };
 }
 
-function createAuthContext(userId = 1): { ctx: TrpcContext } {
+function createAuthContext(userId = 1, role: "user" | "admin" = "user"): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: userId,
     openId: `test-user-${userId}`,
     email: `test${userId}@example.com`,
     name: `Test User ${userId}`,
     loginMethod: "manus",
-    role: "user",
+    role,
     bio: null,
     avatarUrl: null,
     createdAt: new Date(),
@@ -454,5 +454,86 @@ describe("ai.suggestTags", () => {
     // tagIds should be numbers if any tags were suggested
     result.tagIds.forEach((id: number) => expect(typeof id).toBe("number"));
     result.tagNames.forEach((name: string) => expect(typeof name).toBe("string"));
+  });
+});
+
+describe("posts.delete", () => {
+  it("requires authentication", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.posts.delete({ id: 1 })
+    ).rejects.toThrow();
+  });
+
+  it("throws error when post does not exist or user is not the author", async () => {
+    const { ctx } = createAuthContext(999);
+    const caller = appRouter.createCaller(ctx);
+    // Non-existent post or post not owned by user 999
+    await expect(
+      caller.posts.delete({ id: 999999 })
+    ).rejects.toThrow();
+  });
+
+  it("admin can delete any post (even if not the author)", async () => {
+    // Create a post as user 1
+    const { ctx: authorCtx } = createAuthContext(1);
+    const authorCaller = appRouter.createCaller(authorCtx);
+    const created = await authorCaller.posts.create({
+      title: "Post to be deleted by admin",
+      content: "<p>This post will be deleted by an admin</p>",
+      summary: "Admin delete test",
+      postType: "article",
+      toolId: 1,
+      tagIds: [],
+    });
+    expect(created).toHaveProperty("id");
+
+    // Delete as admin (user 2 with admin role)
+    const { ctx: adminCtx } = createAuthContext(2, "admin");
+    const adminCaller = appRouter.createCaller(adminCtx);
+    const result = await adminCaller.posts.delete({ id: created.id });
+    expect(result).toEqual({ success: true });
+  });
+
+  it("author can delete their own post", async () => {
+    // Create a post as user 1
+    const { ctx: authorCtx } = createAuthContext(1);
+    const authorCaller = appRouter.createCaller(authorCtx);
+    const created = await authorCaller.posts.create({
+      title: "Post to be deleted by author",
+      content: "<p>This post will be deleted by the author</p>",
+      summary: "Author delete test",
+      postType: "article",
+      toolId: 1,
+      tagIds: [],
+    });
+    expect(created).toHaveProperty("id");
+
+    // Delete as the same author
+    const result = await authorCaller.posts.delete({ id: created.id });
+    expect(result).toEqual({ success: true });
+  });
+
+  it("non-author non-admin cannot delete another user's post", async () => {
+    // Create a post as user 1
+    const { ctx: authorCtx } = createAuthContext(1);
+    const authorCaller = appRouter.createCaller(authorCtx);
+    const created = await authorCaller.posts.create({
+      title: "Post that should not be deletable",
+      content: "<p>This post should not be deletable by others</p>",
+      summary: "Unauthorized delete test",
+      postType: "article",
+      toolId: 1,
+      tagIds: [],
+    });
+    expect(created).toHaveProperty("id");
+
+    // Try to delete as user 2 (not admin)
+    const { ctx: otherCtx } = createAuthContext(2, "user");
+    const otherCaller = appRouter.createCaller(otherCtx);
+    await expect(
+      otherCaller.posts.delete({ id: created.id })
+    ).rejects.toThrow();
   });
 });

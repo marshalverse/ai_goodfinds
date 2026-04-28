@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, MessageCircle, Bookmark, Eye, ArrowLeft, Share2, Send, Pencil } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Eye, ArrowLeft, Share2, Send, Pencil, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { toast } from "sonner";
@@ -19,8 +21,19 @@ export default function PostDetail() {
   const postId = parseInt(id || "0");
   const { user, isAuthenticated } = useAuth();
   const [commentText, setCommentText] = useState("");
+  const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const { t, language } = useLanguage();
+
+  const deleteMutation = trpc.posts.delete.useMutation({
+    onSuccess: () => {
+      toast.success(language === "zh" ? "文章已刪除" : "Post deleted");
+      navigate("/latest");
+    },
+    onError: (err) => {
+      toast.error(language === "zh" ? "刪除失敗" : "Delete failed");
+    },
+  });
 
   const postTypeLabels: Record<string, string> = {
     article: t("create.type.article"),
@@ -101,12 +114,40 @@ export default function PostDetail() {
 
         <div className="flex items-start justify-between gap-4 mb-4">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">{post.title}</h1>
-          {isAuthenticated && user?.id === post.authorId && (
-            <Link href={`/create?edit=${post.id}`}>
-              <Button variant="outline" size="sm" className="gap-1.5 shrink-0 text-muted-foreground hover:text-foreground">
-                <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
-              </Button>
-            </Link>
+          {isAuthenticated && (user?.id === post.authorId || user?.role === 'admin') && (
+            <div className="flex items-center gap-2 shrink-0">
+              {user?.id === post.authorId && (
+                <Link href={`/create?edit=${post.id}`}>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+                    <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
+                  </Button>
+                </Link>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-3.5 h-3.5" /> {language === "zh" ? "刪除" : "Delete"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{language === "zh" ? "確認刪除文章" : "Confirm Delete"}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {language === "zh" ? "此操作無法復原，文章及其所有評論、按讚、收藏都將被永久刪除。" : "This action cannot be undone. The post and all its comments, likes, and bookmarks will be permanently deleted."}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{language === "zh" ? "取消" : "Cancel"}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteMutation.mutate({ id: postId })}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleteMutation.isPending ? (language === "zh" ? "刪除中..." : "Deleting...") : (language === "zh" ? "確認刪除" : "Confirm Delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
         </div>
 

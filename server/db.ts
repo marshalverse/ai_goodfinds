@@ -222,10 +222,15 @@ export async function getTrendingPosts(limit = 10) {
   return enriched;
 }
 
-export async function deletePost(postId: number, authorId: number) {
+export async function deletePost(postId: number, authorId: number, isAdmin: boolean = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const post = await db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.authorId, authorId))).limit(1);
+  let post;
+  if (isAdmin) {
+    post = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
+  } else {
+    post = await db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.authorId, authorId))).limit(1);
+  }
   if (!post[0]) throw new Error("Post not found or unauthorized");
   await db.delete(postTags).where(eq(postTags.postId, postId));
   await db.delete(comments).where(eq(comments.postId, postId));
