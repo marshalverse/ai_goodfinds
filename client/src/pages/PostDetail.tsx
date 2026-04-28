@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
@@ -111,13 +112,7 @@ export default function PostDetail() {
 
         <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
           <Link href={`/profile/${post.author?.id}`} className="flex items-center gap-2 hover:text-foreground transition-colors">
-            {post.author?.avatarUrl && post.author.avatarUrl.length > 0 ? (
-              <img src={post.author.avatarUrl} alt={post.author.name || "Avatar"} className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
-                {post.author?.name?.[0]?.toUpperCase() || "U"}
-              </div>
-            )}
+            <UserAvatar userId={post.author?.id} name={post.author?.name} avatarUrl={post.author?.avatarUrl} size={32} />
             <span className="font-medium">{post.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
           </Link>
           <span>·</span>
@@ -215,13 +210,7 @@ export default function PostDetail() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Link href={`/profile/${comment.author?.id}`}>
-                      {comment.author?.avatarUrl && comment.author.avatarUrl.length > 0 ? (
-                        <img src={comment.author.avatarUrl} alt={comment.author.name || "Avatar"} className="w-7 h-7 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
-                          {comment.author?.name?.[0]?.toUpperCase() || "U"}
-                        </div>
-                      )}
+                      <UserAvatar userId={comment.author?.id} name={comment.author?.name} avatarUrl={comment.author?.avatarUrl} size={28} />
                     </Link>
                     <span className="text-sm font-medium text-foreground">{comment.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
                     <span className="text-xs text-muted-foreground">

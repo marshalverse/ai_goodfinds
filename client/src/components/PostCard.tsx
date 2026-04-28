@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import UserAvatar from "@/components/UserAvatar";
 
 const postTypeColors: Record<string, string> = {
   article: "bg-blue-500/15 text-blue-400 border-blue-500/20",
@@ -113,13 +114,7 @@ export default function PostCard({ post }: PostCardProps) {
 
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div className="flex items-center gap-2">
-              {post.author?.avatarUrl && post.author.avatarUrl.length > 0 ? (
-                <img src={post.author.avatarUrl} alt={post.author.name || "Avatar"} className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/60 to-primary/30 flex items-center justify-center text-xs text-white font-medium">
-                  {post.author?.name?.[0]?.toUpperCase() || "U"}
-                </div>
-              )}
+              <UserAvatar userId={post.author?.id} name={post.author?.name} avatarUrl={post.author?.avatarUrl} size={24} />
               <span className="text-xs text-muted-foreground">{post.author?.name || (language === "zh" ? "匿名用戶" : "Anonymous")}</span>
               <span className="text-xs text-muted-foreground/50">·</span>
               <span className="text-xs text-muted-foreground/70">

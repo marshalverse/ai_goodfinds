@@ -108,3 +108,5 @@
 - [x] Bug 修復：AI 自動偵測標籤在內容為空時觸發 content too_small 驗證錯誤
 - [x] 發文頁面：內容區「AI 優化提示詞」按鈕改為「AI 內容建議」，偵測文章內容給予建議提示
 - [x] 發文頁面：摘要 input 改為可展開收合的 Textarea，點擊展開編輯
+- [x] 建立 UserAvatar 共用元件：名稱第一個字/字母 + 基於用戶 ID 的固定隨機背景顏色
+- [x] 全站統一使用 UserAvatar 元件（導航列、PostCard、PostDetail、ProfilePage、PromptsPage 等）

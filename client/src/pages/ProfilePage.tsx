@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState, useRef, useCallback } from "react";
 import AvatarCropper from "@/components/AvatarCropper";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function ProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -149,17 +150,7 @@ export default function ProfilePage() {
       <div className="flex items-start gap-6 mb-8">
         {/* Avatar with upload */}
         <div className="relative group shrink-0">
-          {profile.avatarUrl && profile.avatarUrl.length > 0 ? (
-            <img
-              src={profile.avatarUrl}
-              alt={profile.name || "Avatar"}
-              className="w-24 h-24 rounded-full object-cover shadow-lg shadow-primary/20 border-2 border-border/30"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[oklch(0.637_0.237_311)] to-[oklch(0.6_0.2_260)] flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-primary/20">
-              {profile.name?.[0]?.toUpperCase() || "U"}
-            </div>
-          )}
+          <UserAvatar userId={profile.id} name={profile.name} avatarUrl={profile.avatarUrl} size={96} className="shadow-lg shadow-primary/20 border-2 border-border/30" />
           {isOwnProfile && (
             <>
               <button
